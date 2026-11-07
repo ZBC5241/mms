@@ -1,5 +1,166 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><title>mms</title></head>
-<body>mms ticket office ok</body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>会员工作台</title>
+<style>
+  :root{ --p:#7c3aed; --p2:#a855f7; }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:linear-gradient(180deg,#fafafa 0%,#f2f2f7 52%,#e9e9ee 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;color:#1c1c1e}
+  .card{width:min(100%,400px);padding:34px 28px 24px;background:rgba(248,248,250,.86);
+    border:1px solid #fff;border-radius:34px;box-shadow:0 18px 46px rgba(0,0,0,.09);text-align:center}
+  .mark{width:64px;height:64px;margin:0 auto 20px;border-radius:21px;display:grid;place-items:center;
+    color:#fff;font-size:17px;font-weight:600;background:linear-gradient(155deg,#a855f7,#7c3aed 50%,#6d28d9)}
+  h1{font-size:21px;font-weight:650;margin:0 0 6px}
+  .sub{font-size:13px;color:#6e6e73;line-height:1.6;margin-bottom:20px}
+  label{display:block;text-align:left;font-size:13px;color:#3a3a3c;margin:0 4px 6px;font-weight:600}
+  input{width:100%;padding:13px 14px;margin-bottom:14px;border:1px solid #d8d8de;border-radius:14px;
+    font-size:15px;background:#fff;outline:none;min-height:46px}
+  input:focus{border-color:var(--p)}
+  button.go{width:100%;padding:14px;border:0;border-radius:16px;background:linear-gradient(135deg,var(--p2),var(--p));
+    color:#fff;font-size:16px;font-weight:650;cursor:pointer;min-height:50px}
+  button.go:disabled{opacity:.6}
+  .track{height:8px;border-radius:8px;background:rgba(60,60,67,.10);overflow:hidden;margin-top:4px}
+  .fill{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,var(--p2),var(--p));transition:width .18s ease}
+  .num{font-size:12px;color:#6e6e73;margin-top:12px;font-variant-numeric:tabular-nums}
+  .err{margin-top:16px;color:#b3122c;font-size:12.5px;font-weight:700;line-height:1.6;
+    background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:12px;display:none}
+  .foot{margin-top:18px;font-size:11px;color:#8e8e93;line-height:1.6}
+  .foot a{color:var(--p);text-decoration:none}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="card" id="loginView">
+  <div class="mark">看板</div>
+  <h1>会员工作台</h1>
+  <div class="sub">登录后从本机验票下发会员数据</div>
+  <label for="acct">账号</label>
+  <input id="acct" type="text" autocomplete="username" placeholder="如 张博晨 / zbc">
+  <label for="pwd">密码</label>
+  <input id="pwd" type="password" autocomplete="current-password" placeholder="与收入看板一致">
+  <button class="go" id="loginBtn">登 录</button>
+  <div class="err" id="loginErr"></div>
+  <div class="foot">账号密码与收入看板相同 · 数据仅存本机，验票后下发</div>
+</div>
+
+<div class="card hidden" id="loadView">
+  <div class="mark">看板</div>
+  <h1>会员工作台</h1>
+  <div class="sub" id="sub">正在从本机加载会员数据…</div>
+  <div class="track"><div class="fill" id="fill"></div></div>
+  <div class="num" id="num">连接中</div>
+  <div class="err" id="loadErr"></div>
+  <div class="foot">数据只存在本机，验票后分片下发 · <a href="#" id="logoutLink">退出登录</a></div>
+</div>
+
+<script>
+(function(){
+  var API = 'https://lijiacun-board.serveousercontent.com';
+  var TOKEN_KEY = 'wb_token_v1';
+  var loginView=document.getElementById('loginView'),
+      loadView=document.getElementById('loadView'),
+      acct=document.getElementById('acct'), pwd=document.getElementById('pwd'),
+      loginBtn=document.getElementById('loginBtn'), loginErr=document.getElementById('loginErr'),
+      sub=document.getElementById('sub'), fill=document.getElementById('fill'),
+      num=document.getElementById('num'), loadErr=document.getElementById('loadErr'),
+      logoutLink=document.getElementById('logoutLink');
+
+  function show(el){ el.classList.remove('hidden'); }
+  function hide(el){ el.classList.add('hidden'); }
+  function fail(view, box, msg){
+    box.style.display='block'; box.textContent='⚠ '+msg;
+    var b=document.createElement('button');
+    b.textContent='重新加载'; b.className='go'; b.style.marginTop='12px';
+    b.onclick=function(){ location.reload(); };
+    box.appendChild(document.createElement('br')); box.appendChild(b);
+  }
+
+  function doLogin(){
+    var a=acct.value.trim(), p=pwd.value;
+    if(!a||!p){ loginErr.style.display='block'; loginErr.textContent='请输入账号和密码'; return; }
+    loginErr.style.display='none'; loginBtn.disabled=true; loginBtn.textContent='登录中…';
+    fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({account:a,password:p})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(res){
+        if(!res.ok || !res.j.token){ throw new Error(res.j.error||'登录失败'); }
+        try{ localStorage.setItem(TOKEN_KEY, res.j.token); localStorage.setItem('ljc_sync_token_v1', res.j.token); }catch(e){}
+        startLoad(res.j.token);
+      })
+      .catch(function(e){
+        loginBtn.disabled=false; loginBtn.textContent='登 录';
+        loginErr.style.display='block'; loginErr.textContent=e.message||String(e);
+      });
+  }
+
+  function startLoad(token){
+    try{ localStorage.setItem('ljc_sync_token_v1', token); }catch(e){}
+    hide(loginView); show(loadView);
+    loadData(token).catch(function(e){ fail(loadView, loadErr, e.message||String(e)); });
+  }
+
+  function loadData(token){
+    return fetch(API+'/api/wb/manifest?token='+encodeURIComponent(token),{cache:'no-store'})
+      .then(function(r){
+        if(r.status===401){ try{localStorage.removeItem(TOKEN_KEY);}catch(e){} throw new Error('登录已失效，请重新登录'); }
+        if(!r.ok) throw new Error('清单读取失败（'+r.status+'）');
+        return r.json();
+      })
+      .then(function(m){
+        if(!m.chunks||m.chunks<1) throw new Error('清单无有效分片');
+        var parts=new Array(m.chunks), done=0, queue=[];
+        for(var i=0;i<m.chunks;i++) queue.push(i);
+        function paint(){ fill.style.width=(done/m.chunks*100).toFixed(1)+'%';
+          num.textContent='已加载 '+done+' / '+m.chunks+' 片'; }
+        function fetchChunk(i){
+          var tries=3, k=0, last;
+          function attempt(){ return fetch(API+'/api/wb/chunk?i='+i+'&token='+encodeURIComponent(token),{cache:'no-store'})
+            .then(function(q){
+              if(q.status===401){ try{localStorage.removeItem(TOKEN_KEY);}catch(e){} throw new Error('登录已失效，请重新登录'); }
+              if(!q.ok) throw new Error('第 '+i+' 片状态 '+q.status);
+              return q.text();
+            }); }
+          function loop(){ return attempt().then(function(t){ return t; })
+            .catch(function(e){ last=e; if(k++<tries-1) return new Promise(function(r){setTimeout(r,600*(k+1));}).then(loop); throw e; }); }
+          return loop();
+        }
+        async function worker(){
+          while(queue.length){ var i=queue.shift(); parts[i]=await fetchChunk(i); done++; paint(); }
+        }
+        return Promise.all([worker(),worker()]).then(function(){
+          var html=parts.join('');
+          if(html.indexOf('</html>')<0) throw new Error('页面数据不完整');
+          if(html.indexOf('__DATA_W__')>=0) throw new Error('页面数据未注入');
+          // 让内嵌页的同步层(SYNC_API)指向本机隧道，而非 GitHub Pages 域名
+          history.replaceState(null,'','?api='+encodeURIComponent(API));
+          var boot='<scr'+'ipt>window.__WB_ONLINE__=true;window.__WB_TOKEN__='
+            +JSON.stringify(token)+';'
+            +'(function(){var b=document.createElement("button");b.textContent="退出登录";'
+            +'b.style.cssText="position:fixed;top:8px;right:8px;z-index:99999;padding:8px 14px;border:0;'
+            +'border-radius:18px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer";'
+            +'b.onclick=function(){try{localStorage.removeItem("'+TOKEN_KEY+'");}catch(e){}'
+            +'location.href=location.origin+location.pathname;};'
+            +'document.addEventListener("DOMContentLoaded",function(){'
+            +'var m=document.getElementById("main")||document.body; if(m) m.appendChild(b);});})();<\/scr'+'ipt>';
+          html=html.replace('<head>','<head>'+boot,1);
+          sub.textContent='加载完成，正在打开…';
+          document.open(); document.write(html); document.close();
+        });
+      });
+  }
+
+  loginBtn.onclick=doLogin;
+  pwd.addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
+  logoutLink.onclick=function(e){ e.preventDefault(); try{localStorage.removeItem(TOKEN_KEY);}catch(e){} location.reload(); };
+
+  // 启动：有已存 token 直接进，否则显示登录
+  var saved=null; try{ saved=localStorage.getItem(TOKEN_KEY); }catch(e){}
+  if(saved){ startLoad(saved); } else { show(loginView); }
+})();
+</script>
+</body>
 </html>
