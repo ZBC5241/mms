@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>HOME</key>
+		<string>/Users/mac</string>
+		<key>PATH</key>
+		<string>/usr/local/bin:/usr/bin:/bin:/Users/mac/.local/share/TeleAgent/runtimes/python/bin</string>
+	</dict>
+	<key>Label</key>
+	<string>com.lijiacun.dashboard.filmsprint</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/Users/mac/.local/share/TeleAgent/TeleAgent的工作空间/film_sprint/run_film_sprint.sh</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>StandardErrorPath</key>
+	<string>/Users/mac/.local/share/TeleAgent/TeleAgent的工作空间/film_sprint/logs/launchd.err</string>
+	<key>StandardOutPath</key>
+	<string>/Users/mac/.local/share/TeleAgent/TeleAgent的工作空间/film_sprint/logs/launchd.out</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>22</integer>
+		<key>Minute</key>
+		<integer>55</integer>
+	</dict>
+	<key>WorkingDirectory</key>
+	<string>/Users/mac/.local/share/TeleAgent/TeleAgent的工作空间/film_sprint</string>
+</dict>
+</plist>

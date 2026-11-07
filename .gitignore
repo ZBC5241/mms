@@ -1,0 +1,12 @@
+# 真实会员数据（含姓名/电话/消费/券明细 PII），严禁入库
+data/
+
+# 构建中间产物 / 缓存 / 备份（可能含内联会员明细）
+.build/
+__pycache__/
+out/
+logs/
+
+# 备份模板（可能含内联会员明细）
+*.bak_before_*.html
+template_unified.bak_*.html
