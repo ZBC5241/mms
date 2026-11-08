@@ -179,50 +179,39 @@ html.authed .login-gate{display:none!important}
     wbErr.appendChild(document.createElement('br')); wbErr.appendChild(b);
   }
 
-  /* mms 取数：manifest + 8 片并发拉齐（storyos 为单 GET /api/data，此处因体量改为切片） */
+  /* mms 取数（照搬 storyos /api/data 范式）：UI 骨架 + 精简索引两个小响应并发，零切片。
+     历史客户全量消费明细由内层垫片在点开时才按需拉，不占首屏。 */
   function loadData(token){
-    return fetch(API+'/api/wb/manifest?token='+encodeURIComponent(token),{cache:'no-store'})
-      .then(function(r){
-        if(r.status===401){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} throw new Error('登录已过期，请重新登录'); }
-        if(!r.ok) throw new Error('清单读取失败（'+r.status+'）');
-        return r.json();
-      })
-      .then(function(m){
-        if(!m.chunks||m.chunks<1) throw new Error('清单无有效分片');
-        var parts=new Array(m.chunks), done=0, queue=[];
-        for(var i=0;i<m.chunks;i++) queue.push(i);
-        function paint(){ wbFill.style.width=(done/m.chunks*100).toFixed(1)+'%'; wbNum.textContent='已加载 '+done+' / '+m.chunks+' 片'; }
-        function fetchChunk(i){
-          var tries=3,k=0;
-          function attempt(){ return fetch(API+'/api/wb/chunk?i='+i+'&token='+encodeURIComponent(token),{cache:'no-store'})
-            .then(function(q){
-              if(q.status===401){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} throw new Error('登录已失效，请重新登录'); }
-              if(!q.ok) throw new Error('第 '+i+' 片状态 '+q.status);
-              return q.text();
-            }); }
-          function loop(){ return attempt().catch(function(e){ if(k++<tries-1) return new Promise(function(r){setTimeout(r,600*(k+1));}).then(loop); throw e; }); }
-          return loop();
-        }
-        async function worker(){ while(queue.length){ var i=queue.shift(); parts[i]=await fetchChunk(i); done++; paint(); } }
-        return Promise.all([worker(),worker()]).then(function(){
-          var html=parts.join('');
-          if(html.indexOf('</html>')<0) throw new Error('页面数据不完整');
-          if(html.indexOf('__DATA_W__')>=0) throw new Error('页面数据未注入');
-          history.replaceState(null,'','?api='+encodeURIComponent(API));
-          var boot='<scr'+'ipt>window.__WB_ONLINE__=true;window.__WB_TOKEN__='
-            +JSON.stringify(token)+';'
-            +'(function(){var b=document.createElement("button");b.textContent="退出登录";'
-            +'b.style.cssText="position:fixed;top:8px;right:8px;z-index:99999;padding:8px 14px;border:0;'
-            +'border-radius:18px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer";'
-            +'b.onclick=function(){try{localStorage.removeItem("'+TOKEN_KEY+'");localStorage.removeItem("'+SYNC_KEY+'");}catch(e){}'
-            +'location.href=location.origin+location.pathname;};'
-            +'document.addEventListener("DOMContentLoaded",function(){'
-            +'var m=document.getElementById("main")||document.body; if(m) m.appendChild(b);});})();<\/scr'+'ipt>';
-          html=html.replace('<head>','<head>'+boot,1);
-          wbSub.textContent='加载完成，正在打开…';
-          document.open(); document.write(html); document.close();
-        });
-      });
+    var t=encodeURIComponent(token), u=API+'/api/wb/';
+    function chk(r){
+      if(r.status===401){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} throw new Error('登录已过期，请重新登录'); }
+      if(!r.ok) throw new Error('数据读取失败（'+r.status+'）');
+      return r;
+    }
+    var done=0;
+    function tick(){ done++; wbFill.style.width=(done/2*100).toFixed(1)+'%'; wbNum.textContent='已加载 '+done+' / 2'; }
+    var a=fetch(u+'shell?token='+t,{cache:'no-store'}).then(chk).then(function(r){ tick(); return r.text(); });
+    var b=fetch(u+'q?token='+t,{cache:'no-store'}).then(chk).then(function(r){ tick(); return r.text(); });
+    return Promise.all([a,b]).then(function(p){
+      var shell=p[0], qtext=p[1];
+      if(shell.indexOf('</html>')<0) throw new Error('页面骨架不完整');
+      if(shell.indexOf('__INJECT_Q__')<0) throw new Error('页面骨架未就绪');
+      if(!qtext || qtext.charAt(0)!=='{') throw new Error('会员数据不完整');
+      var html=shell.replace('__INJECT_Q__', qtext);
+      history.replaceState(null,'','?api='+encodeURIComponent(API));
+      var boot='<scr'+'ipt>window.__WB_ONLINE__=true;window.__WB_TOKEN__='
+        +JSON.stringify(token)+';window.__WB_API__='+JSON.stringify(API)+';'
+        +'(function(){var b=document.createElement("button");b.textContent="退出登录";'
+        +'b.style.cssText="position:fixed;top:8px;right:8px;z-index:99999;padding:8px 14px;border:0;'
+        +'border-radius:18px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer";'
+        +'b.onclick=function(){try{localStorage.removeItem("'+TOKEN_KEY+'");localStorage.removeItem("'+SYNC_KEY+'");}catch(e){}'
+        +'location.href=location.origin+location.pathname;};'
+        +'document.addEventListener("DOMContentLoaded",function(){'
+        +'var m=document.getElementById("main")||document.body; if(m) m.appendChild(b);});})();<\/scr'+'ipt>';
+      html=html.replace('<head>','<head>'+boot,1);
+      wbSub.textContent='加载完成，正在打开…';
+      document.open(); document.write(html); document.close();
+    });
   }
 
   form.addEventListener('submit', doLogin);
