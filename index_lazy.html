@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>会员管理工作台 · 登录</title>
+<link rel="icon" href="data:,">
+<style>
+/* ===== storyos 登录页同款 login.css（内联，保证 Pages 自包含）===== */
+:root{--brand:#7C3AED;--brand-d:#5B21B6;--ink:#1f2430;--mut:#8a93a6;--line:#eceef3;--bg:#f4f5f8;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);
+  background:linear-gradient(135deg,#6d28d9 0%,#7C3AED 45%,#a855f7 100%);min-height:100%;
+  display:flex;align-items:center;justify-content:center;padding:24px}
+.login-wrap{width:100%;max-width:380px}
+.brand{text-align:center;color:#fff;margin-bottom:22px}
+.brand .logo{width:54px;height:54px;border-radius:16px;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);
+  display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px}
+.brand h1{font-size:19px;margin:0 0 4px;font-weight:700;letter-spacing:.5px}
+.brand p{margin:0;font-size:12.5px;opacity:.82}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(30px);border-radius:22px;padding:26px 22px;
+  box-shadow:0 24px 60px rgba(40,12,90,.35)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:var(--mut);margin:0 0 7px 2px;font-weight:600}
+.field input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:13px;padding:0 14px;font-size:15px;
+  background:#fff;outline:none;transition:.15s}
+.field input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,.13)}
+.btn{width:100%;height:48px;border:0;border-radius:13px;background:linear-gradient(135deg,var(--brand),var(--brand-d));
+  color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px;transition:.15s}
+.btn:active{transform:scale(.985)}
+.btn:disabled{opacity:.6;cursor:default}
+.err{color:#e11d48;font-size:12.5px;margin:10px 2px 0;min-height:16px;font-weight:600}
+.hint{text-align:center;font-size:11.5px;color:rgba(255,255,255,.8);margin-top:16px}
+/* ===== 工作台主体（登录后显示）===== */
+#app{display:none;position:fixed;inset:0;background:var(--bg);flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:5}
+.topbar .t{font-weight:700;font-size:15px}
+.topbar .meta{font-size:11.5px;color:var(--mut)}
+.topbar .spacer{flex:1}
+.topbar input.search{flex:1;max-width:340px;height:38px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;font-size:14px;outline:none}
+.topbar input.search:focus{border-color:var(--brand)}
+.topbar .out{font-size:13px;color:var(--brand);cursor:pointer;font-weight:600}
+.list{flex:1;overflow:auto;padding:12px 16px}
+.row{display:flex;align-items:center;gap:12px;padding:13px 14px;background:#fff;border:1px solid var(--line);border-radius:13px;margin-bottom:9px;cursor:pointer;transition:.12s}
+.row:active{background:#f7f4ff}
+.row .av{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none}
+.row .info{flex:1;min-width:0}
+.row .info .nm{font-weight:700;font-size:14.5px}
+.row .info .sub{font-size:12px;color:var(--mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .tag{font-size:11px;color:#fff;background:var(--brand);padding:3px 8px;border-radius:20px;flex:none}
+.row .tag.zero{background:#cbd2e0;color:#5b6cff}
+.section{font-size:12px;color:var(--mut);font-weight:700;margin:14px 2px 8px}
+/* 明细抽屉 */
+#detail{display:none;position:fixed;inset:0;background:#fff;z-index:20;flex-direction:column;overflow:auto}
+#detail .dhead{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+#detail .dhead .bk{font-size:20px;cursor:pointer;color:var(--mut)}
+#detail .dbody{padding:16px}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.kpi .k{background:var(--bg);border-radius:12px;padding:12px;text-align:center}
+.kpi .k .n{font-size:20px;font-weight:800;color:var(--brand)}
+.kpi .k .l{font-size:11px;color:var(--mut);margin-top:2px}
+.block{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.block h3{margin:0 0 10px;font-size:14px}
+.coupon{font-size:12.5px;padding:8px 10px;border-radius:9px;background:var(--bg);margin-bottom:6px}
+.coupon .cn{font-weight:600}
+.coupon .cd{color:var(--mut);font-size:11.5px;margin-top:2px}
+.purchase{font-size:12.5px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.purchase .pd{color:var(--mut);font-size:11.5px}
+.loadbar{position:fixed;top:0;left:0;height:3px;background:var(--brand);width:0;transition:width .2s;z-index:50}
+.empty{text-align:center;color:var(--mut);padding:40px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="login-wrap" id="loginGate">
+  <div class="brand">
+    <div class="logo">🛍️</div>
+    <h1>会员管理工作台</h1>
+    <p>李家村门店 · 验票登录</p>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label>账号</label>
+      <input id="v111User" type="text" autocomplete="username" placeholder="请输入账号">
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input id="v111Pass" type="password" autocomplete="current-password" placeholder="请输入密码">
+    </div>
+    <button class="btn" id="v111LoginBtn" onclick="doLogin()">登 录</button>
+    <div class="err" id="v111LoginError"></div>
+  </div>
+  <div class="hint">与收入看板（storyos）同一账号密码 · 数据经本机验票后下发</div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div>
+      <div class="t">会员管理工作台</div>
+      <div class="meta" id="metaLine">加载中…</div>
+    </div>
+    <div class="spacer"></div>
+    <input class="search" id="searchInput" placeholder="搜姓名 / 手机尾号" oninput="renderList()">
+    <div class="out" onclick="logout()">退出</div>
+  </div>
+  <div class="list" id="list"></div>
+</div>
+
+<div id="detail">
+  <div class="dhead">
+    <span class="bk" onclick="closeDetail()">‹</span>
+    <div>
+      <div style="font-weight:700;font-size:15px" id="dName">—</div>
+      <div style="font-size:11.5px;color:var(--mut)" id="dSub">—</div>
+    </div>
+  </div>
+  <div class="dbody" id="dBody"><div class="empty">加载中…</div></div>
+</div>
+
+<div class="loadbar" id="loadbar"></div>
+
+<script>
+const API='https://lijiacun-board.serveousercontent.com';
+const TOKEN_KEY='storyos_token_v1';
+const SYNC_KEY='ljc_sync_token_v1';
+
+function getToken(){ try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';} }
+function setToken(t){ try{localStorage.setItem(TOKEN_KEY,t);localStorage.setItem(SYNC_KEY,t);}catch(e){} }
+function delToken(){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} }
+
+function showLoad(p){ var b=document.getElementById('loadbar'); b.style.width=(p*100)+'%'; if(p>=1) setTimeout(function(){b.style.width='0';},300); }
+function showErr(msg){ document.getElementById('v111LoginError').textContent=msg||''; }
+
+// ===== 登录（与 storyos doLogin 同逻辑）=====
+async function doLogin(){
+  var u=document.getElementById('v111User').value.trim();
+  var p=document.getElementById('v111Pass').value;
+  if(!u||!p){ showErr('请输入账号和密码'); return; }
+  showErr(''); var btn=document.getElementById('v111LoginBtn'); btn.disabled=true; btn.textContent='登录中…';
+  try{
+    var r=await fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:u,password:p})});
+    var j=await r.json();
+    if(!r.ok||!j.token){ if(r.status===429) showErr('尝试过于频繁，请 1 分钟后再试'); else showErr(j.error||'账号或密码错误'); btn.disabled=false; btn.textContent='登 录'; return; }
+    setToken(j.token);
+    btn.textContent='验票中…';
+    await startApp(j.token);
+  }catch(e){ showErr('网络异常，请稍后重试'); btn.disabled=false; btn.textContent='登 录'; }
+}
+
+async function startApp(token){
+  showLoad(0.15);
+  try{
+    var meta=await (await fetch(API+'/api/wb/summary?token='+encodeURIComponent(token))).json();
+    if(!meta.ok){ showErr('数据未就绪，请稍后'); return; }
+    window.__SUMMARY__=meta;
+    document.getElementById('loginGate').style.display='none';
+    document.getElementById('app').style.display='flex';
+    var gen=meta.generatedAt||'-';
+    document.getElementById('metaLine').textContent='数据生成 '+gen+' · 在册 '+meta.members.length+' · 历史 '+meta.historyCount;
+    showLoad(0.6);
+    renderList();
+    showLoad(1);
+  }catch(e){ showErr('加载失败：'+e.message); }
+}
+
+var _filtered=null;
+function renderList(){
+  var q=(document.getElementById('searchInput').value||'').trim().toLowerCase();
+  var meta=window.__SUMMARY__; if(!meta) return;
+  var list=document.getElementById('list'); list.innerHTML='';
+  var rows=[];
+  meta.members.forEach(function(m){ rows.push({type:'在册',name:m.name,phone:m.phone,mid:m.mid,level:m.level,sub:(m.emp||'')+' · '+(m.lastTrade||'无消费')}); });
+  meta.history.forEach(function(h){ rows.push({type:'历史',name:h.name,phone:h.phone,mid:h.phone,level:'',sub:'历史客户'}); });
+  if(q) rows=rows.filter(function(r){ return (r.name||'').toLowerCase().indexOf(q)>=0 || (r.phone||'').toLowerCase().indexOf(q)>=0; });
+  if(!rows.length){ list.innerHTML='<div class="empty">无匹配结果</div>'; return; }
+  var html='<div class="section">共 '+rows.length+' 条</div>';
+  rows.slice(0,300).forEach(function(r){
+    var initial=(r.name||'?').replace(/\*/g,'').charAt(0)||'?';
+    html+='<div class="row" onclick="openDetail(\''+String(r.mid).replace(/'/g,"\\'")+'\')">'+
+      '<div class="av">'+initial+'</div>'+
+      '<div class="info"><div class="nm">'+esc(r.name)+' <span style="font-size:11px;color:var(--mut)">'+esc(r.phone)+'</span></div>'+
+      '<div class="sub">'+esc(r.sub)+'</div></div>'+
+      '<div class="tag'+(r.type==='历史'?' zero':'')+'">'+r.type+'</div></div>';
+  });
+  list.innerHTML=html;
+}
+
+async function openDetail(mid){
+  document.getElementById('detail').style.display='flex';
+  document.getElementById('dBody').innerHTML='<div class="empty">加载中…</div>';
+  var token=getToken();
+  try{
+    var d=await (await fetch(API+'/api/wb/member?id='+encodeURIComponent(mid)+'&token='+encodeURIComponent(token))).json();
+    if(!d.ok){ document.getElementById('dBody').innerHTML='<div class="empty">未找到该会员</div>'; return; }
+    var m=d.member;
+    document.getElementById('dName').textContent=m.name||'(未知)';
+    document.getElementById('dSub').textContent=(m.phone||'')+' · '+(m.level||'')+' · 归属 '+(m.emp||'-');
+    var h='';
+    h+='<div class="kpi">'+
+      '<div class="k"><div class="n">'+num(m.n_unused)+'</div><div class="l">未用券</div></div>'+
+      '<div class="k"><div class="n">'+num(m.n_used)+'</div><div class="l">已用券</div></div>'+
+      '<div class="k"><div class="n">'+num(m.n_expired)+'</div><div class="l">已过期</div></div>'+
+      '</div>';
+    h+='<div class="block"><h3>🎟️ 未使用券（'+len(m.unused)+'）</h3>'+(renderCoupons(m.unused))+'</div>';
+    h+='<div class="block"><h3>✅ 已使用券（'+len(m.used)+'）</h3>'+(renderCoupons(m.used)||'<div class="cd">无</div>')+'</div>';
+    h+='<div class="block"><h3>⏰ 已过期券（'+len(m.expired)+'）</h3>'+(renderCoupons(m.expired)||'<div class="cd">无</div>')+'</div>';
+    if(m.consumption&&m.consumption.purchases){ h+='<div class="block"><h3>🛒 消费记录（'+m.consumption.purchases.length+'）</h3>'+renderPurchases(m.consumption.purchases)+'</div>'; }
+    document.getElementById('dBody').innerHTML=h;
+  }catch(e){ document.getElementById('dBody').innerHTML='<div class="empty">加载失败</div>'; }
+}
+function renderCoupons(arr){ if(!arr||!arr.length) return '<div class="cd">无</div>'; return arr.slice(0,20).map(function(c){
+  return '<div class="coupon"><div class="cn">'+esc(c.name||'券')+'</div>'+(c.sub?'<div class="cd">'+esc(c.sub)+'</div>':'')+'</div>'; }).join(''); }
+function renderPurchases(arr){ return arr.slice(0,30).map(function(p){
+  return '<div class="purchase"><div>'+esc(p.name||'商品')+' ×'+(p.qty||1)+' · '+(p.amt||'')+'</div>'+(p.date?'<div class="pd">'+esc(p.date)+' · '+(p.cls||'')+'</div>':'')+'</div>'; }).join(''); }
+
+function closeDetail(){ document.getElementById('detail').style.display='none'; }
+function logout(){ delToken(); location.reload(); }
+function num(v){ return v==null?'0':v; }
+function len(v){ return v? v.length:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+// 启动：已有 token 直接进
+(function(){ var t=getToken(); if(t){ startApp(t); } })();
+</script>
+</body>
+</html>
