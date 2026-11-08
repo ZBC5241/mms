@@ -77,6 +77,8 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
   var SNAP_TTL=24*3600*1000;
   var SNAP_VER=2;   /* v2 = Q 存裸 JSON（注入时才转义），旧 v1 快照必须丢弃 */
   var DB='mms_wb_v1', STORE='snap', KEY='current';
+  /* 零 PII 空数据模板：只含键结构，供首登瞬间画出真实主界面框架，绝不显示 0 冒充数据 */
+  var EMPTY_W="{\"generatedAt\":\"2026-11-08 08:05\",\"gname\":{\"xl\":\"星联会员\",\"xz\":\"新自由\",\"mb\":\"膜套包\",\"ty\":\"通用现金券\",\"dx\":\"定向现金券\"},\"members\":[],\"emps\":[],\"total\":{\"unpaid\":2082,\"members\":355,\"leftSum\":2484,\"byGroup\":{\"xl\":44,\"mb\":248,\"xz\":4,\"dx\":979,\"ty\":807}},\"promo\":{\"asOf\":\"2026-11-06 21:25\",\"count\":60,\"list\":[{\"name\":\"edge 直降799\",\"start\":\"2026-11-06\",\"end\":\"2026-11-06\",\"n\":1},{\"name\":\"Mate pad Air 官网 直降700\",\"start\":\"2026-11-05\",\"end\":\"2026-11-30\",\"n\":1},{\"name\":\"FreeClip 2潮玩拼色款 官网优惠50元（截至11.14日）\",\"start\":\"2026-11-01\",\"end\":\"2026-11-14\",\"n\":3},{\"name\":\"FreeBuds Pro 4 直降400\",\"start\":\"2026-11-01\",\"end\":\"2026-12-31\",\"n\":3},{\"name\":\"Mate Pad  SE 官网直降300元\",\"start\":\"2026-11-01\",\"end\":\"2026-12-31\",\"n\":2},{\"name\":\"FreeBuds Pro5 官网直降300元\",\"start\":\"2026-11-01\",\"end\":\"2026-11-14\",\"n\":5},{\"name\":\"FreeBuds 7官网直降150（截至11.14）\",\"start\":\"2026-11-01\",\"end\":\"2026-11-14\",\"n\":4},{\"name\":\"FreeBuds Neo官网直降50\",\"start\":\"2026-11-01\",\"end\":\"2026-12-31\",\"n\":6},{\"name\":\"clip2 典藏版商城直降50元\",\"start\":\"2026-11-01\",\"end\":\"2026-11-30\",\"n\":2},{\"name\":\"pad mini官网直降500\",\"start\":\"2026-11-01\",\"end\":\"2026-11-30\",\"n\":1},{\"name\":\"Pura 90 plus 限时直降300(SO激励300）\",\"start\":\"2026-10-31\",\"end\":\"2026-11-30\",\"n\":12},{\"name\":\"畅想100系列立减50（贴膜）\",\"start\":\"2025-12-01\",\"end\":\"2027-12-31\",\"n\":26}]},\"asOf\":{\"coupons\":\"2026-11-08 08:05\",\"cash\":\"2026-11-08 08:05\",\"consumption\":\"2026-11-07\",\"consumptionRows\":8001,\"consumptionBuilt\":\"2026-11-08 08:00\",\"profiles\":\"2026-11-07 08:45\",\"profileHits\":322,\"film\":\"2026-11-07\",\"built\":\"2026-11-08 08:05\",\"health\":{\"runAt\":\"2026-11-08 08:00:00\",\"blocks\":{\"monthly\":{\"label\":\"当月整月回补\",\"status\":\"ok\",\"note\":\"今日非周一，无需当月回补\",\"at\":\"2026-11-08 08:00:00\"},\"retail\":{\"label\":\"消费记录增量\",\"status\":\"ok\",\"note\":\"最近 7 天增量拉取完成\",\"at\":\"2026-11-08 08:00:34\"},\"consumption\":{\"label\":\"消费聚合重算\",\"status\":\"ok\",\"note\":\"本地全量重算完成\",\"at\":\"2026-11-08 08:00:36\"},\"cash\":{\"label\":\"现金券明细\",\"status\":\"ok\",\"note\":\"本轮券实例同步 2211 条，零额外请求\",\"at\":\"2026-11-08 08:05:27\"}},\"updatedAt\":\"2026-11-08 08:05:27\"}}}", EMPTY_F="{\"cfg\":{\"start\":\"\",\"days\":0,\"store_target\":0,\"emp_daily\":0,\"emps\":[],\"end\":\"\",\"daily_target\":0},\"today\":\"\",\"daysData\":[],\"doneTotal\":0,\"remain\":0,\"pct\":0,\"daysLeft\":0,\"avgDone\":0,\"needDaily\":0,\"eta\":\"\",\"empStat\":{\"邵乐乐\":{},\"杨丽华\":{},\"李泽\":{},\"张博晨\":{}},\"genAt\":\"\",\"preDays\":[]}", EMPTY_Q="{\"generatedAt\":\"\",\"store\":\"\",\"gname\":{\"xl\":\"\",\"xz\":\"\",\"mb\":\"\",\"ty\":\"\",\"dx\":\"\",\"other\":\"\"},\"total_members\":0,\"members\":[],\"history\":{},\"history_count\":0,\"asOf\":{\"coupons\":\"\",\"cash\":\"\",\"consumption\":\"\",\"consumptionRows\":0,\"consumptionBuilt\":\"\",\"profiles\":\"\",\"profileHits\":0,\"film\":\"\",\"built\":\"\",\"health\":{}}}";
 
   function $(id){ return document.getElementById(id); }
   var form=$('v111LoginForm'), err=$('v111LoginError'), user=$('v111User'), pass=$('v111Pass');
@@ -133,9 +135,11 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
       t.oncomplete=function(){ res(true); }; t.onerror=function(){ rej(t.error); };
     }); }).catch(function(){ return false; });
   }
+  /* 快照只校验「数据契约版本」+ 时效，不与 UI 指纹绑定：
+     界面改版（换 SHELL_SIG）不该把本机已有数据快照判废、逼用户重走 11s 隧道取数。
+     shell 每次都用最新 CDN 骨架覆盖，保证界面永远是新版。 */
   function validSnap(s){
-    return !!(s && s.ver===SNAP_VER && s.sig===SHELL_SIG && s.shell && s.q && s.w &&
-              (Date.now()-s.ts)<SNAP_TTL);
+    return !!(s && s.ver===SNAP_VER && s.q && s.w && s.f && (Date.now()-s.ts)<SNAP_TTL);
   }
 
   /* ---- 界面骨架：零 PII，页面一打开就后台预取，无需登录态 ---- */
@@ -250,17 +254,19 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
   /* ---- 统一入口：有有效快照就零等待直接进数据页；否则原卡片内取数 ---- */
   function boot(token){
     return snapGet().then(function(snap){
-      if(validSnap(snap)){ render(snap, token, false); return null; }  /* 秒进，无加载页 */
-      enter('正在进入会员工作台…');
-      $('wbMsg').textContent='首次在本机打开，正在取会员数据';
-      prefetchShell(); prog(18);
-      return Promise.all([prefetchShell(), fetchDataRetry(token)]).then(function(p){
-        prog(82);
-        var d=p[1];
-        var fresh={ ver:SNAP_VER, ts:Date.now(), sig:SHELL_SIG, shell:p[0], q:d.q, w:d.w, f:d.f,
-                    shim:d.shim, generatedAt:d.generatedAt, asOf:d.asOf, qsig:sigOf(d.q) };
-        return snapSet(fresh).then(function(){ prog(100); render(fresh, token, true); });
-      });
+      if(validSnap(snap)){
+        /* 老用户/重新登录：本机数据快照 + 最新 CDN 骨架 = 点完登录直接进主界面 */
+        return prefetchShell().catch(function(){ return snap.shell||null; }).then(function(shell){
+          if(!shell) throw new Error('界面骨架未就绪');
+          snap.shell=shell; snap.sig=SHELL_SIG;
+          /* 框架页刚拉回来的就是本轮真数据，别再挂「当前显示旧数据」的灰条 */
+          var justNow=!!(snap.justFetched && (Date.now()-snap.ts)<10000);
+          render(snap, token, justNow);
+        });
+      }
+      /* 全新设备：不再停在登录卡片上等隧道。先把真实主界面框架画出来（顶栏/四 Tab/主题条都在），
+         框架页自己后台取数 → 写本机快照 → 刷新一次即为完整数据页。失败显式标红不冒充。 */
+      return prefetchShell().then(function(shell){ renderFrame(shell, token); });
     }).catch(fail);
   }
 
@@ -303,8 +309,8 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     function mount(){
       var m=document.getElementById('main')||document.body;
       var btn=document.createElement('button');
-      btn.textContent='退出登录';
-      btn.style.cssText='position:fixed;top:8px;right:8px;z-index:99999;padding:8px 14px;border:0;border-radius:18px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer';
+      btn.textContent='退出';
+      btn.style.cssText='position:fixed;top:8px;right:8px;z-index:99999;padding:5px 10px;border:0;border-radius:12px;background:rgba(124,58,237,.92);color:#fff;font-size:11.5px;font-weight:600;line-height:1.4;cursor:pointer';
       btn.onclick=function(){
         try{ localStorage.removeItem(cfg.tk); localStorage.removeItem(cfg.sk); }catch(e){}
         try{ indexedDB.deleteDatabase(DB); }catch(e){}
@@ -326,7 +332,7 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
       if(!wf||!wf.ok||!wf.w||!q||q.charAt(0)!=='{') throw new Error('数据不完整');
       var ns=sigOf(q), stamp=wf.generatedAt||'';
       return snapGet().then(function(s){
-        if(s && s.sig===SIG && s.ver===cfg.ver){
+        if(s && s.ver===cfg.ver){
           s.q=q; s.w=wf.w; s.f=wf.f; s.shim=wf.shim||'';
           s.generatedAt=stamp; s.asOf=wf.asOf||{}; s.qsig=ns; s.ts=Date.now();
           return snapSet(s);
@@ -342,6 +348,106 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     }).catch(function(){
       bar('本轮更新失败 · 当前显示 '+STAMP+' 数据，未拿新数据冒充','#b3122c');
     });
+  }
+
+
+  /* ---- 主界面框架页的引导脚本（序列化注入新文档，不引用本闭包变量） ----
+     职责单一：后台取真数据 → 写 IndexedDB 快照 → reload 回登录壳走已验证的秒进路径。 */
+  function frameBoot(cfg){
+    var API=cfg.api, TOK=cfg.tok, VER=cfg.ver, SIG=cfg.sig,
+        DB=cfg.db, STORE=cfg.store, KEY=cfg.key;
+    function $(id){ return document.getElementById(id); }
+    function msg(t,red){ var e=$('wbFrameMsg'); if(e){ e.textContent=t; e.style.color=red?'#b3122c':'#6e6e73'; } }
+    function prog(n){ var e=$('wbFrameFill'); if(e) e.style.width=n+'%'; }
+    function ft(url,ms){
+      var ctl=(typeof AbortController==='function')?new AbortController():null;
+      var tm=ctl?setTimeout(function(){ try{ ctl.abort(); }catch(e){} },ms||60000):null;
+      return fetch(url,ctl?{cache:'no-store',signal:ctl.signal}:{cache:'no-store'})
+        .then(function(r){ if(tm) clearTimeout(tm); return r; },
+              function(e){ if(tm) clearTimeout(tm); throw e; });
+    }
+    function chk(r){
+      if(r.status===401){ try{ localStorage.removeItem(cfg.tk); localStorage.removeItem(cfg.sk); }catch(e){} throw new Error('登录已过期，请重新登录'); }
+      if(!r.ok) throw new Error('数据读取失败（'+r.status+'）');
+      return r;
+    }
+    function sigOf(s){ var h=5381; for(var i=0;i<s.length;i++){ h=((h*33)^s.charCodeAt(i))>>>0; } return h.toString(16); }
+    function idb(){ return new Promise(function(res,rej){
+      var q=indexedDB.open(DB,1);
+      q.onupgradeneeded=function(){ if(!q.result.objectStoreNames.contains(STORE)) q.result.createObjectStore(STORE); };
+      q.onsuccess=function(){ res(q.result); }; q.onerror=function(){ rej(q.error); };
+    }); }
+    function save(v){ return idb().then(function(db){ return new Promise(function(res,rej){
+      var t=db.transaction(STORE,'readwrite'); t.objectStore(STORE).put(v,KEY);
+      t.oncomplete=function(){ res(true); }; t.onerror=function(){ rej(t.error); };
+    }); }); }
+    function once(){
+      var t=encodeURIComponent(TOK), u=API+'/api/wb/';
+      return Promise.all([
+        ft(u+'wf?token='+t,60000).then(chk).then(function(r){ return r.json(); }),
+        ft(u+'qraw?token='+t,60000).then(chk).then(function(r){ return r.text(); })
+      ]).then(function(p){
+        var wf=p[0], q=p[1];
+        if(!wf||!wf.ok||!wf.w||!wf.f) throw new Error('总览数据不完整');
+        if(!q||q.charAt(0)!=='{') throw new Error('会员数据不完整');
+        return { ver:VER, ts:Date.now(), sig:SIG, q:q, w:wf.w, f:wf.f, justFetched:true,
+                 shim:wf.shim||'', generatedAt:wf.generatedAt||'', asOf:wf.asOf||{}, qsig:sigOf(q) };
+      });
+    }
+    function showErr(e){
+      prog(0);
+      msg('⚠ '+((e&&e.message)||e)+'（本轮未拿旧数据冒充）',true);
+      if(!$('wbFrameRetry')){
+        var b=document.createElement('button'); b.id='wbFrameRetry'; b.type='button'; b.textContent='重试';
+        b.style.cssText='display:block;margin:14px auto 0;padding:9px 22px;border:0;border-radius:20px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer';
+        b.onclick=function(){ location.reload(); };
+        var m=$('wbFrameMsg'); if(m&&m.parentNode) m.parentNode.appendChild(b);
+      }
+    }
+    function go(){
+      var ex=$('wbFrameExit');
+      if(ex) ex.onclick=function(){
+        try{ localStorage.removeItem(cfg.tk); localStorage.removeItem(cfg.sk); }catch(e){}
+        try{ indexedDB.deleteDatabase(DB); }catch(e){}
+        location.href=location.origin+location.pathname;
+      };
+      prog(15); msg('正在从本机取会员数据…');
+      once().catch(function(e){
+        if(/过期|401/.test((e&&e.message)||'')) throw e;
+        msg('隧道抖动，正在自动重试…');
+        return new Promise(function(r){ setTimeout(r,1500); }).then(once);
+      }).then(function(v){
+        prog(80);
+        return save(v).then(function(){ prog(100); location.reload(); });
+      }).catch(showErr);
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else go();
+  }
+
+  function renderFrame(shell, token){
+    var h=shell.split('__INJECT_Q__').join(escQ(EMPTY_Q))
+               .split('__INJECT_W__').join(EMPTY_W)
+               .split('__INJECT_F__').join(EMPTY_F);
+    var cfg={ api:API, tok:token, ver:SNAP_VER, sig:SHELL_SIG, db:DB, store:STORE, key:KEY,
+              tk:TOKEN_KEY, sk:SYNC_KEY };
+    var init='window.__WB_ONLINE__=true;window.__WB_TOKEN__='+JSON.stringify(token)
+            +';window.__WB_API__='+JSON.stringify(API)+';';
+    /* 半透明遮罩只盖内容区：顶栏与底部四 Tab 保持可见；不显示任何 0，避免冒充真实数据 */
+    var mask='<div id="wbFrameMask" style="position:fixed;left:0;right:0;top:47px;bottom:52px;z-index:9999;'
+      +'background:rgba(255,255,255,.96);display:flex;align-items:center;justify-content:center;padding:24px">'
+      +'<div style="width:min(100%,340px);text-align:center">'
+      +'<div style="font-size:15px;font-weight:700;color:#1c1c1e;margin-bottom:8px">会员工作台</div>'
+      +'<div id="wbFrameMsg" style="font-size:12.5px;color:#6e6e73;line-height:1.7">正在从本机取会员数据…</div>'
+      +'<div style="height:6px;border-radius:6px;background:rgba(60,60,67,.10);overflow:hidden;margin-top:16px">'
+      +'<div id="wbFrameFill" style="height:100%;width:8%;border-radius:6px;background:linear-gradient(90deg,#a855f7,#7c3aed);transition:width .2s"></div></div>'
+      +'<button id="wbFrameExit" type="button" style="margin-top:18px;border:0;background:none;color:#7c3aed;font-size:12.5px;font-weight:600;cursor:pointer">退出</button>'
+      +'</div></div>';
+    h=h.replace('<head>','<head><scr'+'ipt>'+init+'<\/scr'+'ipt>',1);
+    h=h.replace(/<body[^>]*>/,function(m){ return m+mask; });
+    var boot='<scr'+'ipt>('+frameBoot.toString()+')('+JSON.stringify(cfg)+');<\/scr'+'ipt>';
+    h=h.replace('<head>','<head>'+boot,1);
+    history.replaceState(null,'','?api='+encodeURIComponent(API));
+    document.open(); document.write(h); document.close();
   }
 
   function buildHtml(snap, cfg){
