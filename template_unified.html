@@ -1133,7 +1133,8 @@ const todayLocal = () => dstr(Date.now());
 /* ---------- 回访标记跨设备同步（2026-11-07） ----------
    会员明细仍内嵌本文件，只有「标记」这一小块经售票厅 API 同步；服务端是唯一真源。
    localStorage 只作离线缓存：未登录、失败、失效都必须显式标红，绝不冒充已同步。 */
-const SYNC_TOKEN_KEY = 'ljc_sync_token_v1';
+/* 2026-11-08：MMS 独立账号体系，绝不读写 storyos_token_v1 */
+const SYNC_TOKEN_KEY = 'mms_sync_token_v1';
 const SYNC_SNOOZE_KEY = 'ljc_sync_snooze_v1';
 const SYNC_API = (() => {
   try { const q = new URLSearchParams(location.search).get('api'); if(q) return q.replace(/\/+$/,''); } catch(e) {}
@@ -1245,7 +1246,7 @@ async function syncLogin(){
   if(!acct || !pwd){ err.textContent='请填账号和密码'; err.style.display='block'; return; }
   err.style.display='none'; syncState='busy'; syncPaint();
   try {
-    const r=await fetch(SYNC_API+'/api/login', {method:'POST', headers:{'Content-Type':'application/json'},
+    const r=await fetch(SYNC_API+'/api/mms/login', {method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({account:acct, password:pwd}), cache:'no-store'});
     const d=await r.json();
     if(!r.ok || !d.token){
@@ -1263,7 +1264,8 @@ async function syncLogin(){
 /* 在线版退出：只清登录态，保留 IndexedDB 数据快照（与 storyos doLogout 同款）。
    下次登录直接由快照秒进完整数据页，不再出现任何加载界面。 */
 function wbLogout(){
-  try{ localStorage.removeItem('storyos_token_v1'); localStorage.removeItem('ljc_sync_token_v1'); }catch(e){}
+  /* 只清 MMS 自己的两个 key；storyos_token_v1 属收入看板，两站完全独立，绝不碰 */
+  try{ localStorage.removeItem('mms_token_v1'); localStorage.removeItem('mms_sync_token_v1'); }catch(e){}
   try{ document.documentElement.classList.remove('authed'); }catch(e){}
   var u=location.origin+location.pathname, a=new URLSearchParams(location.search).get('api');
   if(a) u+='?api='+encodeURIComponent(a);

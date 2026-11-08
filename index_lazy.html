@@ -122,8 +122,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <script>
 const API='https://lijiacun-board.serveousercontent.com';
-const TOKEN_KEY='storyos_token_v1';
-const SYNC_KEY='ljc_sync_token_v1';
+const TOKEN_KEY='mms_token_v1';
+const SYNC_KEY='mms_sync_token_v1';
 
 function getToken(){ try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';} }
 function setToken(t){ try{localStorage.setItem(TOKEN_KEY,t);localStorage.setItem(SYNC_KEY,t);}catch(e){} }
@@ -139,7 +139,7 @@ async function doLogin(){
   if(!u||!p){ showErr('请输入账号和密码'); return; }
   showErr(''); var btn=document.getElementById('v111LoginBtn'); btn.disabled=true; btn.textContent='登录中…';
   try{
-    var r=await fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:u,password:p})});
+    var r=await fetch(API+'/api/mms/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:u,password:p})});
     var j=await r.json();
     if(!r.ok||!j.token){ if(r.status===429) showErr('尝试过于频繁，请 1 分钟后再试'); else showErr(j.error||'账号或密码错误'); btn.disabled=false; btn.textContent='登 录'; return; }
     setToken(j.token);

@@ -10,7 +10,7 @@
 <script>
 /* 与 storyos 同款首帧登录态判定：已登录首帧即隐藏登录门，不闪登录页 */
 (function(){
-  try{ if(localStorage.getItem('storyos_token_v1')) document.documentElement.classList.add('authed'); }catch(e){}
+  try{ if(localStorage.getItem('mms_token_v1')) document.documentElement.classList.add('authed'); }catch(e){}
 })();
 </script>
 <style>
@@ -70,9 +70,12 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
 (function(){
   var API=new URLSearchParams(location.search).get('api')
           || 'https://lijiacun-board.serveousercontent.com';
-  var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同 key，登录一次两站通用 */
-  var SYNC_KEY='ljc_sync_token_v1';
-  var SHELL_SIG='9a225214a826cb2d';  /* build_mms_shell.py 产出；UI 改版时同步更新 */
+  /* 2026-11-08 晨哥定：MMS 与 storyos 账号体系完全独立。
+     独立账号表、独立密钥、独立登录端点、独立票据、独立 localStorage key，
+     绝不读写 storyos_token_v1（两站同在 zbc5241.github.io 域，共用会串号）。 */
+  var TOKEN_KEY='mms_token_v1';
+  var SYNC_KEY='mms_sync_token_v1';
+  var SHELL_SIG='f12b4cb9ed9fffb6';  /* build_mms_shell.py 产出；UI 改版时同步更新 */
   var SHELL_URL='./mms_shell.html?v='+SHELL_SIG;
   var SNAP_TTL=24*3600*1000;
   var SNAP_VER=2;   /* v2 = Q 存裸 JSON（注入时才转义），旧 v1 快照必须丢弃 */
@@ -87,7 +90,7 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
   if(new URLSearchParams(location.search).get('expired')==='1')
     err.textContent='登录已过期，请重新登录';
   $('wbForgot').onclick=function(){
-    err.textContent='密码与收入看板共用；忘记请联系店长在本机重置。';
+    err.textContent='会员工作台为独立账号；忘记密码请联系店长在本机重置。';
   };
 
   /* 退出只清登录态，保留 IndexedDB 数据快照（storyos doLogout 同款）。
@@ -161,14 +164,14 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
   }
   prefetchShell();
 
-  /* ---- 与 storyos doLogin 逐字同款：POST /api/login → token → 进板 ---- */
+  /* ---- MMS 独立登录：POST /api/mms/login → 独立票据 → 进板（不碰 storyos 账号） ---- */
   function doLogin(ev){
     ev.preventDefault();
     var raw=(user.value||'').trim().replace(/\s+/g,''), p=pass.value||'';
     if(!raw||!p){ err.textContent='请输入账号和密码'; return false; }
     err.textContent='正在验证…';
     $('wbSubmit').disabled=true;
-    fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    fetch(API+'/api/mms/login',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({account:raw,password:p})})
       .then(async function(r){
         var j=await r.json().catch(function(){return {};});
