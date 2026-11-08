@@ -117,13 +117,22 @@ html.authed .login-gate{display:none!important}
 </div>
 
 <script>
-/* ===== mms 登录逻辑：与 storyos 收入看板 doLogin 逐字同款（令牌签发/429/401/文案一致） =====
-   取数同样照搬 storyos「空壳 + 验票下发小 JSON」：登录并发拉 UI 骨架(shell) 与精简索引(q)
-   两个响应，注入后 document.write 出原工作台页面；两包均 <256KB，零切片。 */
+/* ===== mms 登录逻辑：与 storyos 收入看板 doLogin 逐字同款 =====
+   取数照搬 storyos「界面在 Pages CDN + 隧道只传小 JSON + 本机快照秒出」：
+   - mms_shell.html 为纯界面骨架（零 PII），由 GitHub Pages CDN 秒下
+   - 隧道只发 /api/wb/wf（W/F）与 /api/wb/q（精简 Q）两个小包
+   - 首次登录并发拉齐并写入 IndexedDB 快照；二次打开读快照立即出画面，
+     新文档内引导脚本后台校验鲜数据，显式标注真实时刻，失败标红不冒充。 */
 (function(){
-  var API='https://lijiacun-board.serveousercontent.com';
-  var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同源(GitHub Pages 同 origin)共享，登录一次两站通用 */
-  var SYNC_KEY='ljc_sync_token_v1';   /* 内嵌页同步层读取令牌（template_unified 读此 key） */
+  var API=new URLSearchParams(location.search).get('api')
+          || 'https://lijiacun-board.serveousercontent.com';
+  var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同 origin 共享，登录一次两站通用 */
+  var SYNC_KEY='ljc_sync_token_v1';
+  var SHELL_URL='./mms_shell.html';
+  var SHELL_SIG='87b93d540e8082d0';   /* build_mms_shell.py 产出；模板改版时同步更新 */
+  var SNAP_TTL=24*3600*1000;
+  var DB='mms_wb_v1', STORE='snap', KEY='current';
+
   var form=document.getElementById('wbLoginForm'),
       err=document.getElementById('v111LoginError'),
       user=document.getElementById('v111User'),
@@ -141,12 +150,49 @@ html.authed .login-gate{display:none!important}
   document.getElementById('wbForgot').onclick=function(){
     err.textContent='密码与收入看板共用；忘记请联系店长在本机重置，或登录后由店长在「改密」里处理。';
   };
-  wbLogout.onclick=function(){
-    try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SYNC_KEY); }catch(e){}
-    location.reload();
-  };
+  wbLogout.onclick=function(){ logout(); };
 
-  /* 与 storyos doLogin 完全一致：POST /api/login → 收 token → 存本地 → 进数据加载 */
+  function logout(){
+    try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SYNC_KEY); }catch(e){}
+    try{ indexedDB.deleteDatabase(DB); }catch(e){}
+    location.reload();
+  }
+  function esc(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function sigOf(s){
+    var h=5381; for(var i=0;i<s.length;i++){ h=((h*33)^s.charCodeAt(i))>>>0; }
+    return h.toString(16);
+  }
+
+  /* ---- IndexedDB：快照含界面骨架+数据（约 3.3MB），localStorage 在 iOS 会超限 ---- */
+  function idb(){
+    return new Promise(function(res,rej){
+      if(!window.indexedDB){ rej(new Error('no indexedDB')); return; }
+      var q=indexedDB.open(DB,1);
+      q.onupgradeneeded=function(){
+        if(!q.result.objectStoreNames.contains(STORE)) q.result.createObjectStore(STORE);
+      };
+      q.onsuccess=function(){ res(q.result); };
+      q.onerror=function(){ rej(q.error||new Error('idb open fail')); };
+    });
+  }
+  function snapGet(){
+    return idb().then(function(db){ return new Promise(function(res,rej){
+      var r=db.transaction(STORE,'readonly').objectStore(STORE).get(KEY);
+      r.onsuccess=function(){ res(r.result||null); };
+      r.onerror=function(){ rej(r.error); };
+    }); }).catch(function(){ return null; });
+  }
+  function snapSet(v){
+    return idb().then(function(db){ return new Promise(function(res,rej){
+      var t=db.transaction(STORE,'readwrite'); t.objectStore(STORE).put(v,KEY);
+      t.oncomplete=function(){ res(true); }; t.onerror=function(){ rej(t.error); };
+    }); }).catch(function(){ return false; });
+  }
+
+  /* ---- 与 storyos doLogin 完全一致：POST /api/login → token → 进数据加载 ---- */
   function doLogin(ev){
     ev.preventDefault();
     var raw=(user.value||'').trim().replace(/\s+/g,''), p=pass.value||'';
@@ -169,8 +215,159 @@ html.authed .login-gate{display:none!important}
   function startLoad(token){
     loginGate.classList.add('hide'); loadView.classList.add('show');
     wbErr.classList.remove('show'); wbErr.textContent='';
-    loadData(token).catch(function(e){ showErr(e.message||String(e)); });
+    wbFill.style.width='0%'; wbNum.textContent='读取本机快照…';
+    snapGet().then(function(snap){
+      var ok=snap && snap.sig===SHELL_SIG && snap.shell && snap.q && snap.w &&
+             (Date.now()-snap.ts)<SNAP_TTL;
+      if(ok){
+        wbNum.textContent='本机快照已就绪';
+        render(snap, token, false);          /* 快照秒出：零隧道请求 */
+        return;
+      }
+      wbSub.textContent='首次加载，正在从本机取会员数据…';
+      var done=0;
+      function tick(){ done++; wbFill.style.width=(done/3*100).toFixed(1)+'%'; wbNum.textContent='已加载 '+done+' / 3'; }
+      var a=fetchShell().then(function(v){ tick(); return v; });
+      var b=fetchData(token).then(function(v){ tick(); return v; });
+      return Promise.all([a,b]).then(function(p){
+        var d=p[1];
+        var fresh={ ts:Date.now(), sig:SHELL_SIG, shell:p[0], q:d.q, w:d.w, f:d.f,
+                    shim:d.shim, generatedAt:d.generatedAt, asOf:d.asOf, qsig:sigOf(d.q) };
+        return snapSet(fresh).then(function(){ render(fresh, token, true); });
+      });
+    }).catch(function(e){ showErr(e.message||String(e)); });
   }
+
+  function chk(r){
+    if(r.status===401){
+      try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SYNC_KEY); }catch(e){}
+      throw new Error('登录已过期，请重新登录');
+    }
+    if(!r.ok) throw new Error('数据读取失败（'+r.status+'）');
+    return r;
+  }
+  function fetchShell(){
+    return fetch(SHELL_URL+'?v='+SHELL_SIG,{cache:'force-cache'}).then(function(r){
+      if(!r.ok) throw new Error('界面骨架读取失败（'+r.status+'）');
+      return r.text();
+    }).then(function(s){
+      if(s.indexOf('__INJECT_Q__')<0||s.indexOf('__INJECT_W__')<0||s.indexOf('__INJECT_F__')<0||s.indexOf('</html>')<0)
+        throw new Error('界面骨架未就绪');
+      return s;
+    });
+  }
+  function fetchData(token){
+    var t=encodeURIComponent(token), u=API+'/api/wb/';
+    var a=fetch(u+'wf?token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.json();});
+    var b=fetch(u+'q?token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.text();});
+    return Promise.all([a,b]).then(function(p){
+      var wf=p[0], q=p[1];
+      if(!wf||!wf.ok||!wf.w||!wf.f) throw new Error('总览数据不完整');
+      if(!q||q.charAt(0)!=='{') throw new Error('会员数据不完整');
+      return {q:q,w:wf.w,f:wf.f,shim:wf.shim||'',generatedAt:wf.generatedAt||'',asOf:wf.asOf||{}};
+    });
+  }
+
+  /* ---- 注入新文档的引导脚本：后台校验鲜数据 + 状态条 + 退出 ----
+         序列化函数体执行，不能引用本闭包任何变量，全部由 cfg 传入。 */
+  function wbBoot(cfg){
+    var API=cfg.api, TOK=cfg.tok, FRESH=cfg.fresh, STAMP=cfg.stamp,
+        QSIG=cfg.qsig, SIG=cfg.sig, DB=cfg.db, STORE=cfg.store, KEY=cfg.key;
+    window.__WB_ONLINE__=true; window.__WB_TOKEN__=TOK; window.__WB_API__=API;
+    function bar(txt,color){
+      var el=document.getElementById('wbFresh');
+      if(el){ el.textContent=txt; el.style.color=color; el.style.cursor='default'; el.onclick=null; }
+    }
+    function sigOf(s){ var h=5381; for(var i=0;i<s.length;i++){ h=((h*33)^s.charCodeAt(i))>>>0; } return h.toString(16); }
+    function idb(){ return new Promise(function(res,rej){
+      if(!window.indexedDB){ rej(new Error('no idb')); return; }
+      var q=indexedDB.open(DB,1);
+      q.onupgradeneeded=function(){ if(!q.result.objectStoreNames.contains(STORE)) q.result.createObjectStore(STORE); };
+      q.onsuccess=function(){ res(q.result); }; q.onerror=function(){ rej(q.error); };
+    }); }
+    function snapGet(){ return idb().then(function(db){ return new Promise(function(res,rej){
+      var r=db.transaction(STORE,'readonly').objectStore(STORE).get(KEY);
+      r.onsuccess=function(){ res(r.result||null); }; r.onerror=function(){ rej(r.error); };
+    }); }).catch(function(){ return null; }); }
+    function snapSet(v){ return idb().then(function(db){ return new Promise(function(res,rej){
+      var t=db.transaction(STORE,'readwrite'); t.objectStore(STORE).put(v,KEY);
+      t.oncomplete=function(){ res(true); }; t.onerror=function(){ rej(t.error); };
+    }); }).catch(function(){ return false; }); }
+    function mount(){
+      var m=document.getElementById('main')||document.body;
+      var btn=document.createElement('button');
+      btn.textContent='退出登录';
+      btn.style.cssText='position:fixed;top:8px;right:8px;z-index:99999;padding:8px 14px;border:0;border-radius:18px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer';
+      btn.onclick=function(){
+        try{ localStorage.removeItem(cfg.tk); localStorage.removeItem(cfg.sk); }catch(e){}
+        try{ indexedDB.deleteDatabase(DB); }catch(e){}
+        location.href=location.origin+location.pathname;
+      };
+      if(m) m.appendChild(btn);
+      bar(FRESH?('数据已核验 · '+STAMP):('当前显示 '+STAMP+' 数据 · 正在校验更新…'),
+          FRESH?'#1d8a4e':'#8e8e93');
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
+    if(FRESH) return;
+    var t=encodeURIComponent(TOK), u=API+'/api/wb/';
+    function chk(r){ if(r.status===401) throw new Error('登录已失效'); if(!r.ok) throw new Error(r.status); return r; }
+    Promise.all([
+      fetch(u+'wf?token='+t,{cache:'no-store'}).then(chk).then(function(r){ return r.json(); }),
+      fetch(u+'q?token='+t,{cache:'no-store'}).then(chk).then(function(r){ return r.text(); })
+    ]).then(function(p){
+      var wf=p[0], q=p[1];
+      if(!wf||!wf.ok||!wf.w||!q||q.charAt(0)!=='{') throw new Error('数据不完整');
+      var ns=sigOf(q), stamp=wf.generatedAt||'';
+      return snapGet().then(function(s){
+        if(s && s.sig===SIG){
+          s.q=q; s.w=wf.w; s.f=wf.f; s.shim=wf.shim||'';
+          s.generatedAt=stamp; s.asOf=wf.asOf||{}; s.qsig=ns; s.ts=Date.now();
+          return snapSet(s);
+        }
+        return false;
+      }).then(function(){
+        if(ns!==QSIG || stamp!==STAMP){
+          bar('已获取 '+stamp+' 新数据 · 点此刷新','#b3122c');
+          var el=document.getElementById('wbFresh');
+          if(el){ el.style.cursor='pointer'; el.onclick=function(){ location.reload(); }; }
+        }else{
+          bar('数据已核验 · '+stamp,'#1d8a4e');
+        }
+      });
+    }).catch(function(){
+      bar('本轮更新失败 · 当前显示 '+STAMP+' 数据，未拿新数据冒充','#b3122c');
+    });
+  }
+
+  function buildHtml(snap, cfg){
+    var h=snap.shell
+      .split('__INJECT_Q__').join(snap.q)
+      .split('__INJECT_W__').join(snap.w)
+      .split('__INJECT_F__').join(snap.f);
+    var pos=h.lastIndexOf('&lt;/body&gt;');
+    if(pos>0 && snap.shim) h=h.slice(0,pos)+snap.shim+h.slice(pos);
+    var stamp=esc(snap.generatedAt||'未知时刻');
+    var init=cfg.fresh?('数据已核验 · '+stamp):('当前显示 '+stamp+' 数据 · 正在校验更新…');
+    var color=cfg.fresh?'#1d8a4e':'#8e8e93';
+    var badge='<div id="wbFresh" style="position:fixed;right:10px;bottom:10px;z-index:99998;'
+      +'max-width:min(420px,calc(100vw - 20px));padding:8px 12px;border:1px solid #e5e5ea;'
+      +'border-radius:10px;background:#fff;color:'+color+';font-size:11.5px;line-height:1.6;'
+      +'box-shadow:0 2px 10px rgba(0,0,0,.06)">'+init+'</div>';
+    h=h.replace(/<body[^>]*>/,function(m){ return m+badge; });
+    var boot='<scr'+'ipt>('+wbBoot.toString()+')('+JSON.stringify(cfg)+');<\/scr'+'ipt>';
+    return h.replace('<head>','<head>'+boot,1);
+  }
+
+  function render(snap, token, fresh){
+    var cfg={ api:API, tok:token, fresh:fresh, stamp:snap.generatedAt||'未知时刻',
+              qsig:snap.qsig||'', sig:SHELL_SIG, db:DB, store:STORE, key:KEY,
+              tk:TOKEN_KEY, sk:SYNC_KEY };
+    var html=buildHtml(snap,cfg);
+    history.replaceState(null,'','?api='+encodeURIComponent(API));
+    wbSub.textContent='加载完成，正在打开…';
+    document.open(); document.write(html); document.close();
+  }
+
   function showErr(msg){
     wbErr.textContent='⚠ '+msg; wbErr.classList.add('show');
     var b=document.createElement('button');
@@ -179,44 +376,7 @@ html.authed .login-gate{display:none!important}
     wbErr.appendChild(document.createElement('br')); wbErr.appendChild(b);
   }
 
-  /* mms 取数（照搬 storyos /api/data 范式）：UI 骨架 + 精简索引两个小响应并发，零切片。
-     历史客户全量消费明细由内层垫片在点开时才按需拉，不占首屏。 */
-  function loadData(token){
-    var t=encodeURIComponent(token), u=API+'/api/wb/';
-    function chk(r){
-      if(r.status===401){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} throw new Error('登录已过期，请重新登录'); }
-      if(!r.ok) throw new Error('数据读取失败（'+r.status+'）');
-      return r;
-    }
-    var done=0;
-    function tick(){ done++; wbFill.style.width=(done/2*100).toFixed(1)+'%'; wbNum.textContent='已加载 '+done+' / 2'; }
-    var a=fetch(u+'shell?token='+t,{cache:'no-store'}).then(chk).then(function(r){ tick(); return r.text(); });
-    var b=fetch(u+'q?token='+t,{cache:'no-store'}).then(chk).then(function(r){ tick(); return r.text(); });
-    return Promise.all([a,b]).then(function(p){
-      var shell=p[0], qtext=p[1];
-      if(shell.indexOf('</html>')<0) throw new Error('页面骨架不完整');
-      if(shell.indexOf('__INJECT_Q__')<0) throw new Error('页面骨架未就绪');
-      if(!qtext || qtext.charAt(0)!=='{') throw new Error('会员数据不完整');
-      var html=shell.replace('__INJECT_Q__', qtext);
-      history.replaceState(null,'','?api='+encodeURIComponent(API));
-      var boot='<scr'+'ipt>window.__WB_ONLINE__=true;window.__WB_TOKEN__='
-        +JSON.stringify(token)+';window.__WB_API__='+JSON.stringify(API)+';'
-        +'(function(){var b=document.createElement("button");b.textContent="退出登录";'
-        +'b.style.cssText="position:fixed;top:8px;right:8px;z-index:99999;padding:8px 14px;border:0;'
-        +'border-radius:18px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer";'
-        +'b.onclick=function(){try{localStorage.removeItem("'+TOKEN_KEY+'");localStorage.removeItem("'+SYNC_KEY+'");}catch(e){}'
-        +'location.href=location.origin+location.pathname;};'
-        +'document.addEventListener("DOMContentLoaded",function(){'
-        +'var m=document.getElementById("main")||document.body; if(m) m.appendChild(b);});})();<\/scr'+'ipt>';
-      html=html.replace('<head>','<head>'+boot,1);
-      wbSub.textContent='加载完成，正在打开…';
-      document.open(); document.write(html); document.close();
-    });
-  }
-
   form.addEventListener('submit', doLogin);
-
-  // 启动：有已存 token 直接进，否则显示登录（与 storyos 首帧判定一致）
   var saved=null; try{ saved=localStorage.getItem(TOKEN_KEY); }catch(e){}
   if(saved){ startLoad(saved); }
 })();
