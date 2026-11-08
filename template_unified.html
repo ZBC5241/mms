@@ -1164,6 +1164,11 @@ function syncPaint(){
       : '已连接同步服务 · 当前还没有回访记录 · 标记后会自动同步到其他设备';
     b='刷新';
   } else { t='等待同步'; b='登录同步'; }
+  /* 首登取数期间：复用同一条状态条显示进度，不新造加载页/第二条状态条 */
+  /* cls 是 const，只能原地改内容，不能重新赋值（否则 TypeError 会中断整条初始化链） */
+  if(window.__WB_FRAME_MSG__){ cls.length=0; cls.push('sync-bar', window.__WB_FRAME_RED__?'warn':'busy'); t=window.__WB_FRAME_MSG__; }
+  /* 在线版：状态条右侧固定为「退出」，不再是「刷新」（退出只清登录态，保留本机数据快照） */
+  if(window.__WB_ONLINE__) b='退出';
   bar.className=cls.join(' '); txt.innerHTML=t; btn.textContent=b;
 }
 function syncOpen(){ $('syncMask').classList.add('on'); $('syncSheet').classList.add('on'); $('syncErr').style.display='none'; }
@@ -1255,9 +1260,19 @@ async function syncLogin(){
     syncState='offline'; syncPaint();
   }
 }
+/* 在线版退出：只清登录态，保留 IndexedDB 数据快照（与 storyos doLogout 同款）。
+   下次登录直接由快照秒进完整数据页，不再出现任何加载界面。 */
+function wbLogout(){
+  try{ localStorage.removeItem('storyos_token_v1'); localStorage.removeItem('ljc_sync_token_v1'); }catch(e){}
+  try{ document.documentElement.classList.remove('authed'); }catch(e){}
+  var u=location.origin+location.pathname, a=new URLSearchParams(location.search).get('api');
+  if(a) u+='?api='+encodeURIComponent(a);
+  location.href=u;
+}
 function syncStart(){
   /* 绑定放到这里执行：$ / esc 等工具在下方定义，顶层立即绑定会踩 TDZ */
   $('syncBtn').addEventListener('click', ()=>{
+    if(window.__WB_ONLINE__){ wbLogout(); return; }   /* 在线版：此按钮即「退出」 */
     if(syncState==='auth' || !syncToken) syncOpen(); else syncReconcile();
   });
   $('syncOk').addEventListener('click', syncLogin);

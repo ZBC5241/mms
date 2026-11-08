@@ -72,7 +72,7 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
           || 'https://lijiacun-board.serveousercontent.com';
   var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同 key，登录一次两站通用 */
   var SYNC_KEY='ljc_sync_token_v1';
-  var SHELL_SIG='cacb5fdc0d538d16';  /* build_mms_shell.py 产出；UI 改版时同步更新 */
+  var SHELL_SIG='9a225214a826cb2d';  /* build_mms_shell.py 产出；UI 改版时同步更新 */
   var SHELL_URL='./mms_shell.html?v='+SHELL_SIG;
   var SNAP_TTL=24*3600*1000;
   var SNAP_VER=2;   /* v2 = Q 存裸 JSON（注入时才转义），旧 v1 快照必须丢弃 */
@@ -90,9 +90,11 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     err.textContent='密码与收入看板共用；忘记请联系店长在本机重置。';
   };
 
+  /* 退出只清登录态，保留 IndexedDB 数据快照（storyos doLogout 同款）。
+     快照是 24h 数据缓存、不是登录凭证；下次登录直接由快照秒进完整数据页，
+     这正是 storyos「点登录就到数据页、没有加载页」的关键机制。 */
   function logout(){
     try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SYNC_KEY); }catch(e){}
-    try{ indexedDB.deleteDatabase(DB); }catch(e){}
     location.reload();
   }
   function esc(s){
@@ -286,14 +288,18 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
         QSIG=cfg.qsig, SIG=cfg.sig, DB=cfg.db, STORE=cfg.store, KEY=cfg.key;
     window.__WB_ONLINE__=true; window.__WB_TOKEN__=TOK; window.__WB_API__=API;
     /* 顶部条：正常态不创建；只有旧快照/失败/有新数据才出现，绝不遮底部导航 */
+    /* 异常/新数据提示：文档流内、贴着顶栏下缘，不 fixed、不遮挡 appbar 与筛选按钮。
+       正常态完全不创建（对齐 storyos showOfflineBanner 只在失败降级时出现）。 */
     function bar(txt,color,clickable){
       var el=document.getElementById('wbFresh');
       if(!el){
-        el=document.createElement('div'); el.id='wbFresh';
-        el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;'
-          +'padding:6px 12px;text-align:center;font-size:11.5px;line-height:1.5;'
-          +'background:#fff;border-bottom:1px solid #e5e5ea;box-shadow:0 2px 8px rgba(0,0,0,.05)';
-        (document.body||document.documentElement).appendChild(el);
+        el=document.createElement('div'); el.id='wbFresh'; el.setAttribute('role','status');
+        el.style.cssText='display:none;margin:8px 14px 0;padding:9px 12px;border-radius:12px;'
+          +'border:1px solid #e5e5ea;background:#fff;font-size:11.5px;line-height:1.5;'
+          +'text-align:center;color:#8e8e93';
+        var ap=document.querySelector('header.appbar');
+        if(ap&&ap.parentNode) ap.parentNode.insertBefore(el,ap.nextSibling);
+        else if(document.body) document.body.insertBefore(el,document.body.firstChild);
       }
       el.textContent=txt; el.style.color=color; el.style.display='block';
       el.style.cursor=clickable?'pointer':'default';
@@ -316,18 +322,9 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
       t.oncomplete=function(){ res(true); }; t.onerror=function(){ rej(t.error); };
     }); }).catch(function(){ return false; }); }
     function mount(){
-      var m=document.getElementById('main')||document.body;
-      var btn=document.createElement('button');
-      btn.textContent='退出';
-      btn.style.cssText='position:fixed;top:8px;right:8px;z-index:99999;padding:5px 10px;border:0;border-radius:12px;background:rgba(124,58,237,.92);color:#fff;font-size:11.5px;font-weight:600;line-height:1.4;cursor:pointer';
-      btn.onclick=function(){
-        try{ localStorage.removeItem(cfg.tk); localStorage.removeItem(cfg.sk); }catch(e){}
-        try{ indexedDB.deleteDatabase(DB); }catch(e){}
-        location.href=location.origin+location.pathname;
-      };
-      if(m) m.appendChild(btn);
-      /* 正常拉到真数据：完全不显示角标；快照态才明示真实时刻 */
-      if(!FRESH) bar('当前显示 '+STAMP+' 数据 · 正在校验更新…','#8e8e93');
+      /* 退出按钮已内建在界面状态条右侧（.sync-btn），不再注入 fixed 按钮压住筛选；
+         正常态不创建任何提示条，只有「有新数据 / 本轮更新失败」才显示顶栏下方细条。
+         后台静默换鲜与 storyos loginApply → fetchData → applyPayloadQuiet 同款，用户全程无感。 */
     }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
     if(FRESH) return;
@@ -375,8 +372,11 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     var API=cfg.api, TOK=cfg.tok, VER=cfg.ver, SIG=cfg.sig,
         DB=cfg.db, STORE=cfg.store, KEY=cfg.key;
     function $(id){ return document.getElementById(id); }
-    function msg(t,red){ var e=$('wbFrameMsg'); if(e){ e.textContent=t; e.style.color=red?'#b3122c':'#6e6e73'; } }
-    function prog(n){ var e=$('wbFrameFill'); if(e) e.style.width=n+'%'; }
+    function msg(t,red){
+      window.__WB_FRAME_MSG__=t; window.__WB_FRAME_RED__=!!red;
+      if(typeof syncPaint==='function') syncPaint();   /* 复用界面原有状态条，不新造加载层 */
+    }
+    function prog(n){}   /* 与 storyos 同款：后台静默换鲜，无进度条、无加载动画 */
     function ft(url,ms){
       var ctl=(typeof AbortController==='function')?new AbortController():null;
       var tm=ctl?setTimeout(function(){ try{ ctl.abort(); }catch(e){} },ms||60000):null;
@@ -424,21 +424,9 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     }
     function showErr(e){
       prog(0);
-      msg('⚠ '+((e&&e.message)||e)+'（本轮未拿旧数据冒充）',true);
-      if(!$('wbFrameRetry')){
-        var b=document.createElement('button'); b.id='wbFrameRetry'; b.type='button'; b.textContent='重试';
-        b.style.cssText='display:block;margin:14px auto 0;padding:9px 22px;border:0;border-radius:20px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer';
-        b.onclick=function(){ location.reload(); };
-        var m=$('wbFrameMsg'); if(m&&m.parentNode) m.parentNode.appendChild(b);
-      }
+      msg('⚠ '+((e&&e.message)||e)+' · 本轮未拿旧数据冒充，点「退出」重登即可重试',true);
     }
     function go(){
-      var ex=$('wbFrameExit');
-      if(ex) ex.onclick=function(){
-        try{ localStorage.removeItem(cfg.tk); localStorage.removeItem(cfg.sk); }catch(e){}
-        try{ indexedDB.deleteDatabase(DB); }catch(e){}
-        location.href=location.origin+location.pathname;
-      };
       prog(15); msg('正在从本机取会员数据…');
       once().catch(function(e){
         if(/过期|401/.test((e&&e.message)||'')) throw e;
@@ -459,19 +447,17 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     var cfg={ api:API, tok:token, ver:SNAP_VER, sig:SHELL_SIG, db:DB, store:STORE, key:KEY,
               tk:TOKEN_KEY, sk:SYNC_KEY };
     var init='window.__WB_ONLINE__=true;window.__WB_TOKEN__='+JSON.stringify(token)
-            +';window.__WB_API__='+JSON.stringify(API)+';';
-    /* 半透明遮罩只盖内容区：顶栏与底部四 Tab 保持可见；不显示任何 0，避免冒充真实数据 */
-    var mask='<div id="wbFrameMask" style="position:fixed;left:0;right:0;top:47px;bottom:52px;z-index:9999;'
-      +'background:rgba(255,255,255,.96);display:flex;align-items:center;justify-content:center;padding:24px">'
-      +'<div style="width:min(100%,340px);text-align:center">'
-      +'<div style="font-size:15px;font-weight:700;color:#1c1c1e;margin-bottom:8px">会员工作台</div>'
-      +'<div id="wbFrameMsg" style="font-size:12.5px;color:#6e6e73;line-height:1.7">正在从本机取会员数据…</div>'
-      +'<div style="height:6px;border-radius:6px;background:rgba(60,60,67,.10);overflow:hidden;margin-top:16px">'
-      +'<div id="wbFrameFill" style="height:100%;width:8%;border-radius:6px;background:linear-gradient(90deg,#a855f7,#7c3aed);transition:width .2s"></div></div>'
-      +'<button id="wbFrameExit" type="button" style="margin-top:18px;border:0;background:none;color:#7c3aed;font-size:12.5px;font-weight:600;cursor:pointer">退出</button>'
-      +'</div></div>';
+            +';window.__WB_API__='+JSON.stringify(API)+';'
+            +'window.__WB_FRAME_MSG__="正在从本机取会员数据…";window.__WB_FRAME_RED__=false;';
+    /* 首登不新造任何加载层：真实界面骨架直接可用（顶栏/四 Tab/主题条/宫格都在）；
+       状态写进界面原有的同步条，数字位一律留白，绝不显示 0 冒充真实数据。
+       数据到齐写快照后 reload 一次，由已验证的快照路径秒进完整数据页。 */
+    var css='<style id="wbFrameCss">'
+      +'.ms-i .num,.todo .v,.kpi-mini .v,.tabbar .badge-n,.tg-cell .bd,.tg-flag,.ec-badge,'
+      +'.topic-head .tp-cnt,.topic-tip .tt-tx{visibility:hidden!important}'
+      +'</style>';
+    h=h.replace('</head>', css+'</head>', 1);
     h=h.replace('<head>','<head><scr'+'ipt>'+init+'<\/scr'+'ipt>',1);
-    h=h.replace(/<body[^>]*>/,function(m){ return m+mask; });
     var boot='<scr'+'ipt>('+frameBoot.toString()+')('+JSON.stringify(cfg)+');<\/scr'+'ipt>';
     h=h.replace('<head>','<head>'+boot,1);
     history.replaceState(null,'','?api='+encodeURIComponent(API));
