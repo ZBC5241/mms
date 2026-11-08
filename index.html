@@ -118,8 +118,8 @@ html.authed .login-gate{display:none!important}
 
 <script>
 /* ===== mms 登录逻辑：与 storyos 收入看板 doLogin 逐字同款（令牌签发/429/401/文案一致） =====
-   差异仅在「登录后取数」：storyos 一次 GET /api/data 收 JSON；mms 因 6.8MB 体量走
-   /api/wb/manifest + 8 片 /api/wb/chunk 并发拉齐后 document.write 拼整页（Serveo 单响应~256KB 断流所迫）。 */
+   取数同样照搬 storyos「空壳 + 验票下发小 JSON」：登录并发拉 UI 骨架(shell) 与精简索引(q)
+   两个响应，注入后 document.write 出原工作台页面；两包均 <256KB，零切片。 */
 (function(){
   var API='https://lijiacun-board.serveousercontent.com';
   var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同源(GitHub Pages 同 origin)共享，登录一次两站通用 */
