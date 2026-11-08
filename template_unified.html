@@ -219,8 +219,8 @@ button{font-family:inherit;border:none;background:none;cursor:pointer}
 /* ---------- 筛选 Bottom Sheet ---------- */
 .mask{position:fixed;inset:0;background:rgba(15,15,40,.4);backdrop-filter:blur(3px);z-index:70;opacity:0;pointer-events:none;transition:.22s}
 .mask.on{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--card);border-radius:22px 22px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(calc(100% + 40px));transition:transform .3s cubic-bezier(.32,.72,.35,1);max-width:480px;margin:0 auto;box-shadow:0 -8px 40px rgba(15,15,40,.2);max-height:calc(100vh - 24px);overflow-y:auto}
-.sheet.on{transform:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--card);border-radius:22px 22px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(calc(100% + 40px));transition:transform .3s cubic-bezier(.32,.72,.35,1);max-width:480px;margin:0 auto;box-shadow:none;visibility:hidden;max-height:calc(100vh - 24px);overflow-y:auto}
+.sheet.on{transform:none;visibility:visible;box-shadow:0 -8px 40px rgba(15,15,40,.2)}
 .sheet .grab{width:36px;height:4px;border-radius:3px;background:#e4e6ee;margin:4px auto 12px}
 .sheet h3{font-size:15.5px;font-weight:800;margin-bottom:12px}
 .sheet .grp{margin-bottom:13px}
@@ -878,10 +878,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .sync-mask.on{opacity:1;pointer-events:auto}
 .sync-sheet{position:fixed;left:0;right:0;bottom:0;z-index:91;background:var(--card);
   border-radius:20px 20px 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom,0px));
-  max-width:480px;margin:0 auto;box-shadow:0 -8px 40px rgba(15,15,40,.2);
+  max-width:480px;margin:0 auto;box-shadow:none;visibility:hidden;
   transform:translateY(calc(100% + 40px));pointer-events:none;transition:transform .3s;
   max-height:calc(100vh - 24px);overflow-y:auto}
-.sync-sheet.on{transform:none;pointer-events:auto}
+.sync-sheet.on{transform:none;pointer-events:auto;visibility:visible;box-shadow:0 -8px 40px rgba(15,15,40,.2)}
 .sync-sheet .grab{width:36px;height:4px;border-radius:3px;background:#e4e6ee;margin:4px auto 12px}
 .sync-sheet h3{font-size:15.5px;font-weight:800;margin-bottom:8px}
 .sync-hint{font-size:11.5px;color:var(--tx2);line-height:1.65;margin-bottom:14px}

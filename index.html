@@ -2,156 +2,91 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>会员工作台 · 登录</title>
 <link rel="icon" href="data:,">
+<!-- 登录页样式：逐字克隆 storyos/login.css（同一文件，改版时同步复制一次即可） -->
+<link rel="stylesheet" href="login.css?v=wb_20261108_1">
+<script>
+/* 与 storyos 同款首帧登录态判定：已登录首帧即隐藏登录门，不闪登录页 */
+(function(){
+  try{ if(localStorage.getItem('storyos_token_v1')) document.documentElement.classList.add('authed'); }catch(e){}
+})();
+</script>
 <style>
-/* ===== 以下为 storyos 登录门样式（逐字克隆，内联以便 GitHub Pages 自包含） ===== */
-.login-gate{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:linear-gradient(180deg,#fafafa 0%,#f2f2f7 52%,#e9e9ee 100%);}
-.login-gate.hide{display:none}
-html.authed .login-gate{display:none!important}
-.v111-login{width:100%;display:flex;align-items:center;justify-content:center}
-.v111-login-card{width:min(100%,400px);margin:0 auto;padding:34px 28px 24px;
-  background-color:rgba(248,248,250,.78);
-  background-image:linear-gradient(145deg,rgba(255,255,255,.94),rgba(247,247,249,.76) 54%,rgba(242,242,247,.72));
-  border:1px solid rgba(255,255,255,.96);border-radius:34px;
-  box-shadow:0 18px 46px rgba(0,0,0,.09),0 3px 9px rgba(0,0,0,.035),inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(60,60,67,.10);
-  backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);}
-.v111-login-mark{width:64px;height:64px;margin:0 auto 20px;border-radius:21px;font-size:17px;font-weight:600;
-  display:grid;place-items:center;color:#fff;border:1px solid rgba(255,255,255,.62);
-  background:linear-gradient(155deg,#64d2ff,#0a84ff 50%,#0071e3);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.72),0 8px 20px rgba(0,122,255,.20);}
-.v111-login h1{font-size:26px;text-align:center;font-weight:650;letter-spacing:-.8px;margin:0 0 26px;color:#1c1c1e;}
-.v111-field{display:block;margin-top:17px;}
-.v111-field span{display:block;font-size:13px;color:#6e6e73;margin:0 0 7px 5px;}
-.v111-field input{width:100%;height:54px;border:1px solid rgba(60,60,67,.12);border-radius:17px;padding:0 16px;
-  background:rgba(255,255,255,.74);color:#1c1c1e;font-size:17px;outline:none;
-  box-shadow:inset 0 1px 2px rgba(15,23,42,.035),inset 0 1px 0 rgba(255,255,255,.88);
-  transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease;}
-.v111-field input:focus{background:#fff;border-color:rgba(0,122,255,.48);
-  box-shadow:0 0 0 3px rgba(0,122,255,.10),inset 0 1px 0 #fff;}
-.v111-submit{width:100%;min-height:52px;margin-top:26px;border:1px solid rgba(255,255,255,.48);border-radius:27px;
-  background:linear-gradient(180deg,#168cff,#007aff);cursor:pointer;font:inherit;font-weight:600;color:#fff;
-  box-shadow:0 8px 20px rgba(0,122,255,.22),inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(0,72,158,.22);}
-.v111-submit:active{background:linear-gradient(180deg,#0a7fea,#006ee6);}
-.v111-login-error{min-height:22px;margin-top:14px;text-align:center;color:#bf3e49;font-size:13px;}
-.v111-aux{display:flex;justify-content:center;margin-top:6px}
-.v111-forgot{appearance:none;background:none;border:none;cursor:pointer;font:inherit;
-  font-size:13.5px;font-weight:500;color:#007aff;padding:8px 6px;letter-spacing:.2px}
-.v111-forgot:active{opacity:.55}
-.v111-pane{display:none;width:100%}
-.v111-pane.on{display:block;animation:v111paneIn .28s cubic-bezier(.32,.72,.35,1)}
-@keyframes v111paneIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
-.v111-ok{min-height:22px;margin-top:14px;text-align:center;color:#1d8a4e;font-size:13px;font-weight:600}
-.v111-ok::before{content:"✓ ";font-weight:700}
-.v111-login{
-  --lg-brand:#7c3aed; --lg-brand2:#a855f7; --lg-brand-deep:#6d28d9;
-}
-.v111-login-mark{
-  background:linear-gradient(155deg,var(--lg-brand2),var(--lg-brand) 50%,var(--lg-brand-deep));
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.72),0 8px 20px rgba(124,58,237,.26);
-}
-.v111-submit{
-  background:linear-gradient(180deg,#8b5cf6,#7c3aed);
-  box-shadow:0 8px 20px rgba(124,58,237,.26),inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(76,29,149,.22);
-}
-.v111-submit:active{background:linear-gradient(180deg,#7c3aed,#6d28d9)}
-.v111-field input:focus{
-  border-color:rgba(124,58,237,.48);
-  box-shadow:0 0 0 3px rgba(124,58,237,.10),inset 0 1px 0 #fff;
-}
-.v111-forgot{color:#7c3aed}
-.v111-submit{min-height:52px}
-.v111-login :where(input,button):focus-visible{
-  outline:2px solid #7c3aed;outline-offset:2px;
-}
-
-/* ===== mms 加载态（与登录门同款玻璃卡片） ===== */
-.wb-foot{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));
-  z-index:1000;text-align:center;font-size:11.5px;line-height:1.7;color:#8e8e93;padding:0 20px}
-.wb-load{position:fixed;inset:0;z-index:998;display:none;align-items:center;justify-content:center;padding:24px;
-  background:linear-gradient(180deg,#fafafa 0%,#f2f2f7 52%,#e9e9ee 100%);}
-.wb-load.show{display:flex}
-.wb-track{height:8px;border-radius:8px;background:rgba(60,60,67,.10);overflow:hidden;margin-top:18px}
-.wb-fill{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#a855f7,#7c3aed);transition:width .18s ease}
-.wb-num{font-size:12px;color:#6e6e73;margin-top:12px;font-variant-numeric:tabular-nums;text-align:center}
-.wb-err{margin-top:16px;color:#b3122c;font-size:12.5px;font-weight:700;line-height:1.6;
-  background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:12px;display:none}
+/* storyos 全局基线：缺了 box-sizing 会让 400px 登录卡片在窄屏溢出、整体偏右（本次「偏移」根因） */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:#f2f2f7}
+body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+/* 进入态：留在原登录卡片内原地切换，不跳转、不新建加载页 */
+.wb-enter{display:none}
+.v111-login-card.entering .v111-field,
+.v111-login-card.entering .v111-submit,
+.v111-login-card.entering .v111-aux,
+.v111-login-card.entering .v111-login-error{display:none}
+.v111-login-card.entering .wb-enter{display:block}
+.wb-enter .ttl{font-size:14px;font-weight:600;color:#1c1c1e;text-align:center;line-height:1.7;margin:2px 0 16px}
+.wb-track{height:6px;border-radius:6px;background:rgba(60,60,67,.10);overflow:hidden}
+.wb-fill{height:100%;width:6%;border-radius:6px;background:linear-gradient(90deg,#a855f7,#7c3aed);transition:width .2s ease}
+.wb-msg{margin-top:12px;font-size:12px;color:#8e8e93;line-height:1.6;text-align:center}
+.wb-err{margin-top:14px;color:#b3122c;font-size:12.5px;font-weight:700;line-height:1.6;
+  background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:12px;display:none;text-align:center}
 .wb-err.show{display:block}
 </style>
 </head>
 <body>
-<!-- 登录门：与收入看板（storyos）逐字同款 DOM 契约（v111User/v111Pass/v111LoginError） + 同一套 login.css -->
+<!-- ===== 登录门：逐字克隆 storyos/index.html 的 DOM 契约（v111User/v111Pass/v111LoginError） ===== -->
 <div class="login-gate" id="loginGate">
   <section class="v111-login" aria-label="登录">
     <div class="v111-pane on" id="paneLogin">
-      <form class="v111-login-card" id="wbLoginForm" autocomplete="on">
+      <form class="v111-login-card" id="v111LoginForm" autocomplete="on">
         <div class="v111-login-mark">看板</div>
         <h1>会员工作台</h1>
-        <label class="v111-field"><span>账号</span><input id="v111User" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="与收入看板同一账号"></label>
+        <label class="v111-field"><span>账号</span><input id="v111User" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
         <label class="v111-field"><span>密码</span><input id="v111Pass" name="password" type="password" autocomplete="current-password" required></label>
         <button class="v111-submit" id="wbSubmit" type="submit">登录</button>
         <div class="v111-login-error" id="v111LoginError" role="alert"></div>
-        <div class="v111-aux"><button type="button" class="v111-forgot" id="wbForgot">忘记密码？</button></div>
+        <div class="v111-aux"><button type="button" class="v111-forgot" id="wbForgot">忘记密码</button></div>
+        <!-- 进入态：同一张卡片内，仅首次无本机快照时出现，不是跳转页 -->
+        <div class="wb-enter" id="wbEnter">
+          <div class="ttl" id="wbEnterTxt">正在进入会员工作台…</div>
+          <div class="wb-track"><div class="wb-fill" id="wbFill"></div></div>
+          <div class="wb-msg" id="wbMsg"></div>
+          <div class="wb-err" id="wbErr"></div>
+        </div>
       </form>
-    </div>
-  </section>
-</div>
-<div class="wb-foot">与收入看板使用同一套账号密码 · 会员明细只存在本机，登录后由本机服务下发</div>
-
-<div class="wb-load" id="loadView">
-  <section class="v111-login" aria-label="加载中">
-    <div class="v111-pane on">
-      <div class="v111-login-card" style="text-align:center">
-        <div class="v111-login-mark">看板</div>
-        <h1 style="margin:0 0 14px">会员工作台</h1>
-        <div id="wbSub" style="font-size:13px;color:#6e6e73;line-height:1.6">正在从本机加载会员数据…</div>
-        <div class="wb-track"><div class="wb-fill" id="wbFill"></div></div>
-        <div class="wb-num" id="wbNum">连接中</div>
-        <div class="wb-err" id="wbErr"></div>
-        <button type="button" class="v111-forgot" id="wbLogout" style="margin-top:16px">退出登录</button>
-      </div>
     </div>
   </section>
 </div>
 
 <script>
-/* ===== mms 登录逻辑：与 storyos 收入看板 doLogin 逐字同款 =====
-   取数照搬 storyos「界面在 Pages CDN + 隧道只传小 JSON + 本机快照秒出」：
-   - mms_shell.html 为纯界面骨架（零 PII），由 GitHub Pages CDN 秒下
-   - 隧道只发 /api/wb/wf（W/F）与 /api/wb/q（精简 Q）两个小包
-   - 首次登录并发拉齐并写入 IndexedDB 快照；二次打开读快照立即出画面，
-     新文档内引导脚本后台校验鲜数据，显式标注真实时刻，失败标红不冒充。 */
+/* ===== mms 在线版：与 storyos 同套工作流 =====
+   界面在 GitHub Pages CDN（mms_shell.html，零 PII，页面一打开就后台预取）；
+   隧道只发 /api/wb/wf 与 /api/wb/qraw 两个数据包；本机 IndexedDB 快照秒出。
+   已登录 → 首帧隐藏登录门 → 读快照直接进数据页（无加载页、无跳转）；
+   首次登录 → 原登录卡片内原地等待取数，到齐即刻进入，全程不新建中间页面。
+   正常态不显示任何角标；仅快照/失败/有新数据时在顶部显示醒目标红（不遮底部菜单）。 */
 (function(){
   var API=new URLSearchParams(location.search).get('api')
           || 'https://lijiacun-board.serveousercontent.com';
-  var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同 origin 共享，登录一次两站通用 */
+  var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同 key，登录一次两站通用 */
   var SYNC_KEY='ljc_sync_token_v1';
-  var SHELL_URL='./mms_shell.html';
-  var SHELL_SIG='87b93d540e8082d0';   /* build_mms_shell.py 产出；模板改版时同步更新 */
+  var SHELL_SIG='cacb5fdc0d538d16';  /* build_mms_shell.py 产出；UI 改版时同步更新 */
+  var SHELL_URL='./mms_shell.html?v='+SHELL_SIG;
   var SNAP_TTL=24*3600*1000;
-  var SNAP_VER=2;   /* v2 = Q 存裸 JSON（注入时才转义）；旧版 v1 快照是转义态，必须丢弃重拉，避免二次转义 */
+  var SNAP_VER=2;   /* v2 = Q 存裸 JSON（注入时才转义），旧 v1 快照必须丢弃 */
   var DB='mms_wb_v1', STORE='snap', KEY='current';
 
-  var form=document.getElementById('wbLoginForm'),
-      err=document.getElementById('v111LoginError'),
-      user=document.getElementById('v111User'),
-      pass=document.getElementById('v111Pass'),
-      loginGate=document.getElementById('loginGate'),
-      loadView=document.getElementById('loadView'),
-      wbSub=document.getElementById('wbSub'),
-      wbFill=document.getElementById('wbFill'),
-      wbNum=document.getElementById('wbNum'),
-      wbErr=document.getElementById('wbErr'),
-      wbLogout=document.getElementById('wbLogout');
+  function $(id){ return document.getElementById(id); }
+  var form=$('v111LoginForm'), err=$('v111LoginError'), user=$('v111User'), pass=$('v111Pass');
+  var shellP=null;
 
   if(new URLSearchParams(location.search).get('expired')==='1')
     err.textContent='登录已过期，请重新登录';
-  document.getElementById('wbForgot').onclick=function(){
-    err.textContent='密码与收入看板共用；忘记请联系店长在本机重置，或登录后由店长在「改密」里处理。';
+  $('wbForgot').onclick=function(){
+    err.textContent='密码与收入看板共用；忘记请联系店长在本机重置。';
   };
-  wbLogout.onclick=function(){ logout(); };
 
   function logout(){
     try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SYNC_KEY); }catch(e){}
@@ -171,8 +106,9 @@ html.authed .login-gate{display:none!important}
     var h=5381; for(var i=0;i<s.length;i++){ h=((h*33)^s.charCodeAt(i))>>>0; }
     return h.toString(16);
   }
+  function tok(){ try{ return localStorage.getItem(TOKEN_KEY)||''; }catch(e){ return ''; } }
 
-  /* ---- IndexedDB：快照含界面骨架+数据（约 3.3MB），localStorage 在 iOS 会超限 ---- */
+  /* ---- IndexedDB：快照含界面骨架+数据（约 3.3MB），iOS localStorage 会超限 ---- */
   function idb(){
     return new Promise(function(res,rej){
       if(!window.indexedDB){ rej(new Error('no indexedDB')); return; }
@@ -197,51 +133,79 @@ html.authed .login-gate{display:none!important}
       t.oncomplete=function(){ res(true); }; t.onerror=function(){ rej(t.error); };
     }); }).catch(function(){ return false; });
   }
+  function validSnap(s){
+    return !!(s && s.ver===SNAP_VER && s.sig===SHELL_SIG && s.shell && s.q && s.w &&
+              (Date.now()-s.ts)<SNAP_TTL);
+  }
 
-  /* ---- 与 storyos doLogin 完全一致：POST /api/login → token → 进数据加载 ---- */
+  /* ---- 界面骨架：零 PII，页面一打开就后台预取，无需登录态 ---- */
+  function fetchShell(){
+    return fetch(SHELL_URL,{cache:'force-cache'}).then(function(r){
+      if(!r.ok) throw new Error('界面骨架读取失败（'+r.status+'）');
+      return r.text();
+    }).then(function(s){
+      if(s.indexOf('__INJECT_Q__')<0||s.indexOf('__INJECT_W__')<0||s.indexOf('__INJECT_F__')<0||s.indexOf('</html>')<0)
+        throw new Error('界面骨架未就绪');
+      return s;
+    });
+  }
+  function prefetchShell(){
+    if(!shellP) shellP=fetchShell().catch(function(e){ shellP=null; throw e; });
+    return shellP;
+  }
+  prefetchShell();
+
+  /* ---- 与 storyos doLogin 逐字同款：POST /api/login → token → 进板 ---- */
   function doLogin(ev){
     ev.preventDefault();
     var raw=(user.value||'').trim().replace(/\s+/g,''), p=pass.value||'';
     if(!raw||!p){ err.textContent='请输入账号和密码'; return false; }
     err.textContent='正在验证…';
+    $('wbSubmit').disabled=true;
     fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({account:raw,password:p})})
       .then(async function(r){
         var j=await r.json().catch(function(){return {};});
-        if(r.status===429){ err.textContent=j.error||'尝试过于频繁，请 1 分钟后再试'; return; }
-        if(!r.ok){ err.textContent=j.error||'账号或密码错误，请重新输入'; pass.value=''; pass.focus(); return; }
+        if(r.status===429){ err.textContent=j.error||'尝试过于频繁，请 1 分钟后再试'; $('wbSubmit').disabled=false; return; }
+        if(!r.ok){ err.textContent=j.error||'账号或密码错误，请重新输入'; pass.value=''; pass.focus(); $('wbSubmit').disabled=false; return; }
         err.textContent='';
         try{ localStorage.setItem(TOKEN_KEY,j.token); localStorage.setItem(SYNC_KEY,j.token); }catch(e){}
-        startLoad(j.token);
+        boot(j.token);
         pass.value='';
-      }).catch(function(){ err.textContent='数据服务连接失败，请检查网络后重试'; });
+      }).catch(function(){ err.textContent='数据服务连接失败，请检查网络后重试'; $('wbSubmit').disabled=false; });
     return false;
   }
 
-  function startLoad(token){
-    loginGate.classList.add('hide'); loadView.classList.add('show');
-    wbErr.classList.remove('show'); wbErr.textContent='';
-    wbFill.style.width='0%'; wbNum.textContent='读取本机快照…';
-    snapGet().then(function(snap){
-      var ok=snap && snap.ver===SNAP_VER && snap.sig===SHELL_SIG && snap.shell && snap.q && snap.w &&
-             (Date.now()-snap.ts)<SNAP_TTL;
-      if(ok){
-        wbNum.textContent='本机快照已就绪';
-        render(snap, token, false);          /* 快照秒出：零隧道请求 */
-        return;
-      }
-      wbSub.textContent='首次加载，正在从本机取会员数据…';
-      var done=0;
-      function tick(){ done++; wbFill.style.width=(done/3*100).toFixed(1)+'%'; wbNum.textContent='已加载 '+done+' / 3'; }
-      var a=fetchShell().then(function(v){ tick(); return v; });
-      var b=fetchData(token).then(function(v){ tick(); return v; });
-      return Promise.all([a,b]).then(function(p){
-        var d=p[1];
-        var fresh={ ver:SNAP_VER, ts:Date.now(), sig:SHELL_SIG, shell:p[0], q:d.q, w:d.w, f:d.f,
-                    shim:d.shim, generatedAt:d.generatedAt, asOf:d.asOf, qsig:sigOf(d.q) };
-        return snapSet(fresh).then(function(){ render(fresh, token, true); });
-      });
-    }).catch(function(e){ showErr(e.message||String(e)); });
+  /* ---- 进入态：同一张登录卡片内，不跳页 ---- */
+  function enter(txt){
+    document.documentElement.classList.remove('authed');
+    form.classList.add('entering');
+    $('wbEnterTxt').textContent=txt||'正在进入会员工作台…';
+    $('wbErr').classList.remove('show'); $('wbErr').textContent='';
+    $('wbFill').style.width='8%'; $('wbMsg').textContent='';
+  }
+  function prog(n){ $('wbFill').style.width=n+'%'; }
+  function fail(e){
+    var msg=(e&&e.message)||String(e||'未知错误');
+    if(/过期|401|失效/.test(msg)){
+      try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SYNC_KEY); }catch(_){}
+      document.documentElement.classList.remove('authed');
+      form.classList.remove('entering');
+      $('wbSubmit').disabled=false;
+      err.textContent='登录已过期，请重新登录';
+      return;
+    }
+    enter('未能进入工作台');
+    prog(0);
+    var box=$('wbErr');
+    box.textContent='⚠ '+msg+'（本轮未拿旧数据冒充新数据）';
+    box.classList.add('show');
+    if(!$('wbRetry')){
+      var b=document.createElement('button'); b.id='wbRetry'; b.type='button';
+      b.className='v111-submit'; b.style.marginTop='12px'; b.textContent='重试';
+      b.onclick=function(){ location.reload(); };
+      box.appendChild(document.createElement('br')); box.appendChild(b);
+    }
   }
 
   function chk(r){
@@ -251,16 +215,6 @@ html.authed .login-gate{display:none!important}
     }
     if(!r.ok) throw new Error('数据读取失败（'+r.status+'）');
     return r;
-  }
-  function fetchShell(){
-    return fetch(SHELL_URL+'?v='+SHELL_SIG,{cache:'force-cache'}).then(function(r){
-      if(!r.ok) throw new Error('界面骨架读取失败（'+r.status+'）');
-      return r.text();
-    }).then(function(s){
-      if(s.indexOf('__INJECT_Q__')<0||s.indexOf('__INJECT_W__')<0||s.indexOf('__INJECT_F__')<0||s.indexOf('</html>')<0)
-        throw new Error('界面骨架未就绪');
-      return s;
-    });
   }
   function fetchData(token){
     var t=encodeURIComponent(token), u=API+'/api/wb/';
@@ -274,16 +228,44 @@ html.authed .login-gate{display:none!important}
     });
   }
 
-  /* ---- 注入新文档的引导脚本：后台校验鲜数据 + 状态条 + 退出 ----
+  /* ---- 统一入口：有有效快照就零等待直接进数据页；否则原卡片内取数 ---- */
+  function boot(token){
+    return snapGet().then(function(snap){
+      if(validSnap(snap)){ render(snap, token, false); return null; }  /* 秒进，无加载页 */
+      enter('正在进入会员工作台…');
+      $('wbMsg').textContent='首次在本机打开，正在取会员数据';
+      prefetchShell(); prog(18);
+      return Promise.all([prefetchShell(), fetchData(token)]).then(function(p){
+        prog(82);
+        var d=p[1];
+        var fresh={ ver:SNAP_VER, ts:Date.now(), sig:SHELL_SIG, shell:p[0], q:d.q, w:d.w, f:d.f,
+                    shim:d.shim, generatedAt:d.generatedAt, asOf:d.asOf, qsig:sigOf(d.q) };
+        return snapSet(fresh).then(function(){ prog(100); render(fresh, token, true); });
+      });
+    }).catch(fail);
+  }
+
+  /* ---- 注入新文档的引导脚本：后台校验鲜数据 + 顶部异常条 + 退出 ----
          序列化函数体执行，不能引用本闭包任何变量，全部由 cfg 传入。 */
   function wbBoot(cfg){
     var API=cfg.api, TOK=cfg.tok, FRESH=cfg.fresh, STAMP=cfg.stamp,
         QSIG=cfg.qsig, SIG=cfg.sig, DB=cfg.db, STORE=cfg.store, KEY=cfg.key;
     window.__WB_ONLINE__=true; window.__WB_TOKEN__=TOK; window.__WB_API__=API;
-    function bar(txt,color){
+    /* 顶部条：正常态不创建；只有旧快照/失败/有新数据才出现，绝不遮底部导航 */
+    function bar(txt,color,clickable){
       var el=document.getElementById('wbFresh');
-      if(el){ el.textContent=txt; el.style.color=color; el.style.cursor='default'; el.onclick=null; }
+      if(!el){
+        el=document.createElement('div'); el.id='wbFresh';
+        el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;'
+          +'padding:6px 12px;text-align:center;font-size:11.5px;line-height:1.5;'
+          +'background:#fff;border-bottom:1px solid #e5e5ea;box-shadow:0 2px 8px rgba(0,0,0,.05)';
+        (document.body||document.documentElement).appendChild(el);
+      }
+      el.textContent=txt; el.style.color=color; el.style.display='block';
+      el.style.cursor=clickable?'pointer':'default';
+      el.onclick=clickable?function(){ location.reload(); }:null;
     }
+    function hideBar(){ var el=document.getElementById('wbFresh'); if(el) el.style.display='none'; }
     function sigOf(s){ var h=5381; for(var i=0;i<s.length;i++){ h=((h*33)^s.charCodeAt(i))>>>0; } return h.toString(16); }
     function idb(){ return new Promise(function(res,rej){
       if(!window.indexedDB){ rej(new Error('no idb')); return; }
@@ -310,8 +292,8 @@ html.authed .login-gate{display:none!important}
         location.href=location.origin+location.pathname;
       };
       if(m) m.appendChild(btn);
-      bar(FRESH?('数据已核验 · '+STAMP):('当前显示 '+STAMP+' 数据 · 正在校验更新…'),
-          FRESH?'#1d8a4e':'#8e8e93');
+      /* 正常拉到真数据：完全不显示角标；快照态才明示真实时刻 */
+      if(!FRESH) bar('当前显示 '+STAMP+' 数据 · 正在校验更新…','#8e8e93');
     }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
     if(FRESH) return;
@@ -333,11 +315,9 @@ html.authed .login-gate{display:none!important}
         return false;
       }).then(function(){
         if(ns!==QSIG || stamp!==STAMP){
-          bar('已获取 '+stamp+' 新数据 · 点此刷新','#b3122c');
-          var el=document.getElementById('wbFresh');
-          if(el){ el.style.cursor='pointer'; el.onclick=function(){ location.reload(); }; }
+          bar('已获取 '+stamp+' 新数据 · 点此刷新','#b3122c',true);
         }else{
-          bar('数据已核验 · '+stamp,'#1d8a4e');
+          hideBar();   /* 核验一致：不再显示「数据已核验」卡片 */
         }
       });
     }).catch(function(){
@@ -352,14 +332,6 @@ html.authed .login-gate{display:none!important}
       .split('__INJECT_F__').join(snap.f);
     var pos=h.lastIndexOf('&lt;/body&gt;');
     if(pos>0 && snap.shim) h=h.slice(0,pos)+snap.shim+h.slice(pos);
-    var stamp=esc(snap.generatedAt||'未知时刻');
-    var init=cfg.fresh?('数据已核验 · '+stamp):('当前显示 '+stamp+' 数据 · 正在校验更新…');
-    var color=cfg.fresh?'#1d8a4e':'#8e8e93';
-    var badge='<div id="wbFresh" style="position:fixed;right:10px;bottom:10px;z-index:99998;'
-      +'max-width:min(420px,calc(100vw - 20px));padding:8px 12px;border:1px solid #e5e5ea;'
-      +'border-radius:10px;background:#fff;color:'+color+';font-size:11.5px;line-height:1.6;'
-      +'box-shadow:0 2px 10px rgba(0,0,0,.06)">'+init+'</div>';
-    h=h.replace(/<body[^>]*>/,function(m){ return m+badge; });
     var boot='<scr'+'ipt>('+wbBoot.toString()+')('+JSON.stringify(cfg)+');<\/scr'+'ipt>';
     return h.replace('<head>','<head>'+boot,1);
   }
@@ -370,21 +342,12 @@ html.authed .login-gate{display:none!important}
               tk:TOKEN_KEY, sk:SYNC_KEY };
     var html=buildHtml(snap,cfg);
     history.replaceState(null,'','?api='+encodeURIComponent(API));
-    wbSub.textContent='加载完成，正在打开…';
     document.open(); document.write(html); document.close();
   }
 
-  function showErr(msg){
-    wbErr.textContent='⚠ '+msg; wbErr.classList.add('show');
-    var b=document.createElement('button');
-    b.textContent='重新加载'; b.className='v111-submit'; b.style.marginTop='12px';
-    b.onclick=function(){ location.reload(); };
-    wbErr.appendChild(document.createElement('br')); wbErr.appendChild(b);
-  }
-
   form.addEventListener('submit', doLogin);
-  var saved=null; try{ saved=localStorage.getItem(TOKEN_KEY); }catch(e){}
-  if(saved){ startLoad(saved); }
+  var saved=tok();
+  if(saved) boot(saved);   /* 已登录：登录门首帧即隐藏，直接进数据页 */
 })();
 </script>
 </body>
