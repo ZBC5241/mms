@@ -230,9 +230,18 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     return fetch(url,opt).then(function(r){ if(tm) clearTimeout(tm); return r; },
                               function(e){ if(tm) clearTimeout(tm); throw e; });
   }
+  /* 免费隧道会把个别分片打成 HTTP/2 断流：10 片更小 + 片级重试 2 次，
+     只有整批仍失败才回退全量，避免「一片断流→整批回退 195KB 单包→再等 30s」。 */
   function fetchQParts(u,t){
-    var n=6,a=[];
-    for(var i=0;i<n;i++) a.push(fetchT(u+'qpart?i='+i+'&n='+n+'&token='+t,60000).then(chk).then(function(r){return r.text();}));
+    var n=10;
+    function part(i,tries){
+      return fetchT(u+'qpart?i='+i+'&n='+n+'&token='+t,30000).then(chk).then(function(r){return r.text();})
+        .catch(function(e){
+          if(tries<=0) throw e;
+          return new Promise(function(res){setTimeout(res,400);}).then(function(){return part(i,tries-1);});
+        });
+    }
+    var a=[]; for(var i=0;i<n;i++) a.push(part(i,2));
     return Promise.all(a).then(function(x){
       var v=x.join(''); if(!v||v.charAt(0)!=='{') throw new Error('会员数据分片不完整'); return v;
     }).catch(function(){
@@ -331,8 +340,15 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     var t=encodeURIComponent(TOK), u=API+'/api/wb/';
     function chk(r){ if(r.status===401) throw new Error('登录已失效'); if(!r.ok) throw new Error(r.status); return r; }
     function qparts(){
-      var n=6,a=[];
-      for(var i=0;i<n;i++) a.push(fetch(u+'qpart?i='+i+'&n='+n+'&token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.text();}));
+      var n=10;
+      function part(i,tries){
+        return fetch(u+'qpart?i='+i+'&n='+n+'&token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.text();})
+          .catch(function(e){
+            if(tries<=0) throw e;
+            return new Promise(function(res){setTimeout(res,400);}).then(function(){return part(i,tries-1);});
+          });
+      }
+      var a=[]; for(var i=0;i<n;i++) a.push(part(i,2));
       return Promise.all(a).then(function(x){
         var v=x.join(''); if(!v||v.charAt(0)!=='{') throw new Error('分片不完整'); return v;
       }).catch(function(){
@@ -401,8 +417,15 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     }); }); }
     /* 隧道单响应 195KB 会 HTTP/2 断流：6 片并发小包，失败才回退全量 */
     function qparts(u,t){
-      var n=6,a=[];
-      for(var i=0;i<n;i++) a.push(ft(u+'qpart?i='+i+'&n='+n+'&token='+t,60000).then(chk).then(function(r){ return r.text(); }));
+      var n=10;
+      function part(i,tries){
+        return ft(u+'qpart?i='+i+'&n='+n+'&token='+t,30000).then(chk).then(function(r){ return r.text(); })
+          .catch(function(e){
+            if(tries<=0) throw e;
+            return new Promise(function(res){setTimeout(res,400);}).then(function(){ return part(i,tries-1); });
+          });
+      }
+      var a=[]; for(var i=0;i<n;i++) a.push(part(i,2));
       return Promise.all(a).then(function(x){
         var v=x.join(''); if(!v||v.charAt(0)!=='{') throw new Error('会员数据分片不完整'); return v;
       }).catch(function(){
