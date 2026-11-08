@@ -82,17 +82,17 @@ html.authed .login-gate{display:none!important}
 </style>
 </head>
 <body>
-<!-- 登录门：与收入看板（storyos）逐字同款，样式直接引用同一个 login.css -->
+<!-- 登录门：与收入看板（storyos）逐字同款 DOM 契约（v111User/v111Pass/v111LoginError） + 同一套 login.css -->
 <div class="login-gate" id="loginGate">
   <section class="v111-login" aria-label="登录">
-    <div class="v111-pane on">
+    <div class="v111-pane on" id="paneLogin">
       <form class="v111-login-card" id="wbLoginForm" autocomplete="on">
         <div class="v111-login-mark">看板</div>
         <h1>会员工作台</h1>
-        <label class="v111-field"><span>账号</span><input id="wbUser" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="与收入看板同一账号"></label>
-        <label class="v111-field"><span>密码</span><input id="wbPass" name="password" type="password" autocomplete="current-password" required></label>
+        <label class="v111-field"><span>账号</span><input id="v111User" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="与收入看板同一账号"></label>
+        <label class="v111-field"><span>密码</span><input id="v111Pass" name="password" type="password" autocomplete="current-password" required></label>
         <button class="v111-submit" id="wbSubmit" type="submit">登录</button>
-        <div class="v111-login-error" id="wbError" role="alert"></div>
+        <div class="v111-login-error" id="v111LoginError" role="alert"></div>
         <div class="v111-aux"><button type="button" class="v111-forgot" id="wbForgot">忘记密码？</button></div>
       </form>
     </div>
@@ -117,15 +117,17 @@ html.authed .login-gate{display:none!important}
 </div>
 
 <script>
+/* ===== mms 登录逻辑：与 storyos 收入看板 doLogin 逐字同款（令牌签发/429/401/文案一致） =====
+   差异仅在「登录后取数」：storyos 一次 GET /api/data 收 JSON；mms 因 6.8MB 体量走
+   /api/wb/manifest + 8 片 /api/wb/chunk 并发拉齐后 document.write 拼整页（Serveo 单响应~256KB 断流所迫）。 */
 (function(){
   var API='https://lijiacun-board.serveousercontent.com';
-  var TOKEN_KEY='wb_token_v1';
-  var SYNC_KEY='ljc_sync_token_v1';
+  var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同源(GitHub Pages 同 origin)共享，登录一次两站通用 */
+  var SYNC_KEY='ljc_sync_token_v1';   /* 内嵌页同步层读取令牌（template_unified 读此 key） */
   var form=document.getElementById('wbLoginForm'),
-      err=document.getElementById('wbError'),
-      btn=document.getElementById('wbSubmit'),
-      user=document.getElementById('wbUser'),
-      pass=document.getElementById('wbPass'),
+      err=document.getElementById('v111LoginError'),
+      user=document.getElementById('v111User'),
+      pass=document.getElementById('v111Pass'),
       loginGate=document.getElementById('loginGate'),
       loadView=document.getElementById('loadView'),
       wbSub=document.getElementById('wbSub'),
@@ -144,8 +146,27 @@ html.authed .login-gate{display:none!important}
     location.reload();
   };
 
+  /* 与 storyos doLogin 完全一致：POST /api/login → 收 token → 存本地 → 进数据加载 */
+  function doLogin(ev){
+    ev.preventDefault();
+    var raw=(user.value||'').trim().replace(/\s+/g,''), p=pass.value||'';
+    if(!raw||!p){ err.textContent='请输入账号和密码'; return false; }
+    err.textContent='正在验证…';
+    fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({account:raw,password:p})})
+      .then(async function(r){
+        var j=await r.json().catch(function(){return {};});
+        if(r.status===429){ err.textContent=j.error||'尝试过于频繁，请 1 分钟后再试'; return; }
+        if(!r.ok){ err.textContent=j.error||'账号或密码错误，请重新输入'; pass.value=''; pass.focus(); return; }
+        err.textContent='';
+        try{ localStorage.setItem(TOKEN_KEY,j.token); localStorage.setItem(SYNC_KEY,j.token); }catch(e){}
+        startLoad(j.token);
+        pass.value='';
+      }).catch(function(){ err.textContent='数据服务连接失败，请检查网络后重试'; });
+    return false;
+  }
+
   function startLoad(token){
-    try{ localStorage.setItem(TOKEN_KEY,token); localStorage.setItem(SYNC_KEY,token); }catch(e){}
     loginGate.classList.add('hide'); loadView.classList.add('show');
     wbErr.classList.remove('show'); wbErr.textContent='';
     loadData(token).catch(function(e){ showErr(e.message||String(e)); });
@@ -158,10 +179,11 @@ html.authed .login-gate{display:none!important}
     wbErr.appendChild(document.createElement('br')); wbErr.appendChild(b);
   }
 
+  /* mms 取数：manifest + 8 片并发拉齐（storyos 为单 GET /api/data，此处因体量改为切片） */
   function loadData(token){
     return fetch(API+'/api/wb/manifest?token='+encodeURIComponent(token),{cache:'no-store'})
       .then(function(r){
-        if(r.status===401){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} throw new Error('登录已失效，请重新登录'); }
+        if(r.status===401){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} throw new Error('登录已过期，请重新登录'); }
         if(!r.ok) throw new Error('清单读取失败（'+r.status+'）');
         return r.json();
       })
@@ -186,7 +208,6 @@ html.authed .login-gate{display:none!important}
           var html=parts.join('');
           if(html.indexOf('</html>')<0) throw new Error('页面数据不完整');
           if(html.indexOf('__DATA_W__')>=0) throw new Error('页面数据未注入');
-          // 让内嵌页的同步层(SYNC_API)指向本机隧道，而非 GitHub Pages 域名
           history.replaceState(null,'','?api='+encodeURIComponent(API));
           var boot='<scr'+'ipt>window.__WB_ONLINE__=true;window.__WB_TOKEN__='
             +JSON.stringify(token)+';'
@@ -204,24 +225,9 @@ html.authed .login-gate{display:none!important}
       });
   }
 
-  form.addEventListener('submit', function(ev){
-    ev.preventDefault(); err.textContent='';
-    var u=user.value.trim(), p=pass.value;
-    if(!u||!p){ err.textContent='请输入账号和密码'; return; }
-    btn.disabled=true; btn.textContent='登录中…';
-    (async function(){
-      try{
-        var r=await fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({account:u,password:p}),cache:'no-store'});
-        var j=await r.json();
-        if(!r.ok||!j.token){ err.textContent=j.error||'账号或密码错误'; pass.value=''; return; }
-        startLoad(j.token);
-      }catch(e){ err.textContent='连不上服务，请检查网络或隧道是否在线'; }
-      finally{ btn.disabled=false; btn.textContent='登录'; }
-    })();
-  });
+  form.addEventListener('submit', doLogin);
 
-  // 启动：有已存 token 直接进，否则显示登录
+  // 启动：有已存 token 直接进，否则显示登录（与 storyos 首帧判定一致）
   var saved=null; try{ saved=localStorage.getItem(TOKEN_KEY); }catch(e){}
   if(saved){ startLoad(saved); }
 })();
