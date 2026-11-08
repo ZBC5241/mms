@@ -131,6 +131,7 @@ html.authed .login-gate{display:none!important}
   var SHELL_URL='./mms_shell.html';
   var SHELL_SIG='87b93d540e8082d0';   /* build_mms_shell.py 产出；模板改版时同步更新 */
   var SNAP_TTL=24*3600*1000;
+  var SNAP_VER=2;   /* v2 = Q 存裸 JSON（注入时才转义）；旧版 v1 快照是转义态，必须丢弃重拉，避免二次转义 */
   var DB='mms_wb_v1', STORE='snap', KEY='current';
 
   var form=document.getElementById('wbLoginForm'),
@@ -160,6 +161,11 @@ html.authed .login-gate{display:none!important}
   function esc(s){
     return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  /* 与 Python html.escape(quote=True) 逐字一致：Q 存裸 JSON，注入 srcdoc 属性时才转义 */
+  function escQ(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
   }
   function sigOf(s){
     var h=5381; for(var i=0;i<s.length;i++){ h=((h*33)^s.charCodeAt(i))>>>0; }
@@ -217,7 +223,7 @@ html.authed .login-gate{display:none!important}
     wbErr.classList.remove('show'); wbErr.textContent='';
     wbFill.style.width='0%'; wbNum.textContent='读取本机快照…';
     snapGet().then(function(snap){
-      var ok=snap && snap.sig===SHELL_SIG && snap.shell && snap.q && snap.w &&
+      var ok=snap && snap.ver===SNAP_VER && snap.sig===SHELL_SIG && snap.shell && snap.q && snap.w &&
              (Date.now()-snap.ts)<SNAP_TTL;
       if(ok){
         wbNum.textContent='本机快照已就绪';
@@ -231,7 +237,7 @@ html.authed .login-gate{display:none!important}
       var b=fetchData(token).then(function(v){ tick(); return v; });
       return Promise.all([a,b]).then(function(p){
         var d=p[1];
-        var fresh={ ts:Date.now(), sig:SHELL_SIG, shell:p[0], q:d.q, w:d.w, f:d.f,
+        var fresh={ ver:SNAP_VER, ts:Date.now(), sig:SHELL_SIG, shell:p[0], q:d.q, w:d.w, f:d.f,
                     shim:d.shim, generatedAt:d.generatedAt, asOf:d.asOf, qsig:sigOf(d.q) };
         return snapSet(fresh).then(function(){ render(fresh, token, true); });
       });
@@ -259,7 +265,7 @@ html.authed .login-gate{display:none!important}
   function fetchData(token){
     var t=encodeURIComponent(token), u=API+'/api/wb/';
     var a=fetch(u+'wf?token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.json();});
-    var b=fetch(u+'q?token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.text();});
+    var b=fetch(u+'qraw?token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.text();});
     return Promise.all([a,b]).then(function(p){
       var wf=p[0], q=p[1];
       if(!wf||!wf.ok||!wf.w||!wf.f) throw new Error('总览数据不完整');
@@ -313,13 +319,13 @@ html.authed .login-gate{display:none!important}
     function chk(r){ if(r.status===401) throw new Error('登录已失效'); if(!r.ok) throw new Error(r.status); return r; }
     Promise.all([
       fetch(u+'wf?token='+t,{cache:'no-store'}).then(chk).then(function(r){ return r.json(); }),
-      fetch(u+'q?token='+t,{cache:'no-store'}).then(chk).then(function(r){ return r.text(); })
+      fetch(u+'qraw?token='+t,{cache:'no-store'}).then(chk).then(function(r){ return r.text(); })
     ]).then(function(p){
       var wf=p[0], q=p[1];
       if(!wf||!wf.ok||!wf.w||!q||q.charAt(0)!=='{') throw new Error('数据不完整');
       var ns=sigOf(q), stamp=wf.generatedAt||'';
       return snapGet().then(function(s){
-        if(s && s.sig===SIG){
+        if(s && s.sig===SIG && s.ver===cfg.ver){
           s.q=q; s.w=wf.w; s.f=wf.f; s.shim=wf.shim||'';
           s.generatedAt=stamp; s.asOf=wf.asOf||{}; s.qsig=ns; s.ts=Date.now();
           return snapSet(s);
@@ -341,7 +347,7 @@ html.authed .login-gate{display:none!important}
 
   function buildHtml(snap, cfg){
     var h=snap.shell
-      .split('__INJECT_Q__').join(snap.q)
+      .split('__INJECT_Q__').join(escQ(snap.q))
       .split('__INJECT_W__').join(snap.w)
       .split('__INJECT_F__').join(snap.f);
     var pos=h.lastIndexOf('&lt;/body&gt;');
@@ -360,7 +366,7 @@ html.authed .login-gate{display:none!important}
 
   function render(snap, token, fresh){
     var cfg={ api:API, tok:token, fresh:fresh, stamp:snap.generatedAt||'未知时刻',
-              qsig:snap.qsig||'', sig:SHELL_SIG, db:DB, store:STORE, key:KEY,
+              qsig:snap.qsig||'', sig:SHELL_SIG, ver:SNAP_VER, db:DB, store:STORE, key:KEY,
               tk:TOKEN_KEY, sk:SYNC_KEY };
     var html=buildHtml(snap,cfg);
     history.replaceState(null,'','?api='+encodeURIComponent(API));
