@@ -216,15 +216,34 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
     if(!r.ok) throw new Error('数据读取失败（'+r.status+'）');
     return r;
   }
+  /* 免费隧道偶发挂起/断流：给每个请求加硬超时，超时即失败重试，绝不无限转圈 */
+  function fetchT(url, ms){
+    var ctl=(typeof AbortController==='function')?new AbortController():null;
+    var tm=ctl?setTimeout(function(){ try{ ctl.abort(); }catch(e){} },ms||60000):null;
+    var opt=ctl?{cache:'no-store',signal:ctl.signal}:{cache:'no-store'};
+    return fetch(url,opt).then(function(r){ if(tm) clearTimeout(tm); return r; },
+                              function(e){ if(tm) clearTimeout(tm); throw e; });
+  }
   function fetchData(token){
     var t=encodeURIComponent(token), u=API+'/api/wb/';
-    var a=fetch(u+'wf?token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.json();});
-    var b=fetch(u+'qraw?token='+t,{cache:'no-store'}).then(chk).then(function(r){return r.text();});
+    var a=fetchT(u+'wf?token='+t,60000).then(chk).then(function(r){return r.json();});
+    var b=fetchT(u+'qraw?token='+t,60000).then(chk).then(function(r){return r.text();});
     return Promise.all([a,b]).then(function(p){
       var wf=p[0], q=p[1];
       if(!wf||!wf.ok||!wf.w||!wf.f) throw new Error('总览数据不完整');
       if(!q||q.charAt(0)!=='{') throw new Error('会员数据不完整');
       return {q:q,w:wf.w,f:wf.f,shim:wf.shim||'',generatedAt:wf.generatedAt||'',asOf:wf.asOf||{}};
+    });
+  }
+  /* 与 storyos 同款 1.5s 退避重试一次（登录失效不重试，直接回登录页） */
+  function fetchDataRetry(token){
+    return fetchData(token).catch(function(e){
+      if(/过期|401|失效/.test((e&&e.message)||'')) throw e;
+      $('wbMsg').textContent='隧道抖动，正在自动重试…';
+      return new Promise(function(r){ setTimeout(r,1500); }).then(function(){
+        $('wbMsg').textContent='重新连接本机服务…';
+        return fetchData(token);
+      });
     });
   }
 
@@ -235,7 +254,7 @@ body{font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica
       enter('正在进入会员工作台…');
       $('wbMsg').textContent='首次在本机打开，正在取会员数据';
       prefetchShell(); prog(18);
-      return Promise.all([prefetchShell(), fetchData(token)]).then(function(p){
+      return Promise.all([prefetchShell(), fetchDataRetry(token)]).then(function(p){
         prog(82);
         var d=p[1];
         var fresh={ ver:SNAP_VER, ts:Date.now(), sig:SHELL_SIG, shell:p[0], q:d.q, w:d.w, f:d.f,
