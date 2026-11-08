@@ -6,7 +6,7 @@
 <title>会员工作台 · 登录</title>
 <link rel="icon" href="data:,">
 <style>
-/* ===== storyos 登录门样式（逐字克隆，内联以便 GitHub Pages 自包含） ===== */
+/* ===== 以下为 storyos 登录门样式（逐字克隆，内联以便 GitHub Pages 自包含） ===== */
 .login-gate{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;
   background:linear-gradient(180deg,#fafafa 0%,#f2f2f7 52%,#e9e9ee 100%);}
 .login-gate.hide{display:none}
@@ -79,159 +79,6 @@ html.authed .login-gate{display:none!important}
 .wb-err{margin-top:16px;color:#b3122c;font-size:12.5px;font-weight:700;line-height:1.6;
   background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:12px;display:none}
 .wb-err.show{display:block}
-
-/* ===== 工作台（storyos 同款：小壳 + JSON 渲染） ===== */
-:root{--brand:#7C3AED;--red:#FF2442;--bg:#f5f6f8;--card:#fff;--line:#eceef3;
-  --tx:#1f2430;--tx2:#5b6472;--tx3:#8a93a6;--r:12px;--sh:0 1px 3px rgba(20,28,50,.05);}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
-  color:var(--tx);background:var(--bg);font-size:14px;line-height:1.5}
-#app{display:none}
-#app.on{display:block}
-.wrap{max-width:1080px;margin:0 auto;padding:14px 14px 90px}
-
-/* 顶栏 */
-.topbar{display:flex;align-items:center;gap:10px;padding:0 2px 12px}
-.topbar .tt{font-size:19px;font-weight:800;letter-spacing:-.3px}
-.topbar .meta{font-size:11.5px;color:var(--tx3);margin-top:2px}
-.spacer{flex:1}
-.btn-out{border:1px solid var(--line);background:var(--card);color:var(--tx2);font-size:12.5px;
-  font-weight:600;padding:7px 13px;border-radius:20px;cursor:pointer}
-.btn-out:active{background:var(--bg)}
-
-/* 告警条 / 数据时点 */
-.banner{border-radius:var(--r);padding:11px 14px;font-size:12.5px;font-weight:700;line-height:1.6;margin-bottom:12px}
-.banner.ok{background:#fff;color:var(--tx3);border:1px solid var(--line);font-weight:500}
-.banner.warn{background:#FFF1F2;border:1px solid #FECDD3;color:#B3122C}
-.banner .b-t{font-weight:800;margin-bottom:2px}
-
-/* 卡片 / 区块 */
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  box-shadow:var(--sh);padding:14px;margin-bottom:12px}
-.sec-h{display:flex;align-items:baseline;gap:8px;margin-bottom:11px}
-.sec-h h2{margin:0;font-size:15px;font-weight:800}
-.sec-h .d{font-size:11.5px;color:var(--tx3)}
-.hint{font-size:11.5px;color:var(--tx3);line-height:1.65}
-.stale{color:var(--red);font-weight:700}
-
-/* 数字条 */
-.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  box-shadow:var(--sh);padding:12px 11px}
-.kpi .t{font-size:10.5px;color:var(--tx3);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi .v{font-size:22px;font-weight:850;line-height:1.15;margin-top:3px;font-variant-numeric:tabular-nums}
-.kpi .v small{font-size:10.5px;font-weight:600;color:var(--tx3);margin-left:2px}
-@media(max-width:767px){.kpi-strip{grid-template-columns:repeat(2,1fr)}.kpi .v{font-size:24px}}
-
-/* 数据时点网格 */
-.asof-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px}
-.asof-i{display:flex;align-items:baseline;gap:6px;font-size:12px;min-width:0}
-.asof-i .an{color:var(--tx3);flex:none}
-.asof-i .av{color:var(--tx2);font-weight:700;font-variant-numeric:tabular-nums;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media(min-width:768px){.asof-g{grid-template-columns:repeat(3,minmax(0,1fr))}}
-
-/* 表格 */
-.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
-.tbl th{text-align:left;color:var(--tx3);font-weight:700;font-size:11px;padding:8px 8px;border-bottom:1px solid var(--line)}
-.tbl td{padding:10px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
-.tbl tr:last-child td{border-bottom:0}
-.tbl .num{font-weight:700}
-.tbl .emp{font-weight:700}
-.bar{height:6px;border-radius:6px;background:#eef0f6;overflow:hidden;min-width:60px}
-.bar i{display:block;height:100%;border-radius:6px;background:var(--brand)}
-
-/* 列表行 */
-.row{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--card);
-  border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px;cursor:pointer;box-shadow:var(--sh)}
-.row:active{background:#faf8ff}
-.av{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;
-  color:#fff;font-weight:700;font-size:15px;background:linear-gradient(135deg,#9D6BF5,#7C3AED)}
-.av.gray{background:#c8cede}
-.row .info{flex:1;min-width:0}
-.row .nm{font-weight:700;font-size:14px}
-.row .nm .ph{font-size:11.5px;color:var(--tx3);font-weight:500;margin-left:6px}
-.row .sub{font-size:11.5px;color:var(--tx3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tag{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;flex:none;white-space:nowrap}
-.tag.b{background:#f1eafe;color:#7C3AED}
-.tag.g{background:#eef6f0;color:#2b8a4e}
-.tag.r{background:#fff1f2;color:#B3122C}
-.tag.n{background:#f1f3f8;color:var(--tx2)}
-
-/* chips / 搜索 / 主题条 */
-.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch}
-.chip{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--tx2);
-  font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:20px;cursor:pointer}
-.chip.on{background:var(--card);color:var(--tx);border-color:var(--brand);box-shadow:inset 0 -2px 0 var(--brand)}
-.search{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 14px;
-  font-size:15px;background:var(--card);outline:none;margin-bottom:12px}
-.search:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,.10)}
-.topics{display:flex;gap:8px;overflow-x:auto;padding:0 0 12px;-webkit-overflow-scrolling:touch}
-.topic{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--tx2);
-  font-size:13px;font-weight:700;padding:9px 16px;border-radius:12px;cursor:pointer;box-shadow:var(--sh)}
-.topic.on{background:var(--brand);color:#fff;border-color:var(--brand)}
-
-/* 宫格 */
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.grid .g{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  box-shadow:var(--sh);padding:14px 6px;text-align:center;cursor:pointer}
-.grid .g .gl{font-size:12px;font-weight:700;color:var(--tx)}
-.grid .g .gv{font-size:17px;font-weight:850;margin-bottom:3px;font-variant-numeric:tabular-nums}
-.grid .g .gv small{font-size:10px;color:var(--tx3);font-weight:600}
-@media(min-width:768px){.grid{grid-template-columns:repeat(6,1fr)}}
-
-/* 底部/侧边 Tab 导航 */
-#tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;background:var(--card);
-  border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
-#tabbar button{flex:1;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;
-  align-items:center;gap:3px;padding:5px 0;color:var(--tx3);font-size:10.5px;font-weight:600}
-#tabbar button svg{width:21px;height:21px}
-#tabbar button.on{color:var(--brand)}
-@media(min-width:768px){
-  #tabbar{top:0;bottom:0;right:auto;width:180px;flex-direction:column;border-top:0;
-    border-right:1px solid var(--line);padding:20px 12px;align-items:stretch}
-  #tabbar button{flex:none;flex-direction:row;gap:10px;padding:11px 12px;border-radius:10px;font-size:13.5px}
-  #tabbar button.on{background:#f4efff}
-  .wrap{margin-left:180px;padding:22px 22px 40px}
-  body{padding-left:0}
-}
-.pane{display:none}.pane.on{display:block}
-
-/* L3 明细整页 */
-#detail{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;
-  opacity:0;pointer-events:none;transition:opacity .2s}
-body.l3-open #detail{opacity:1;pointer-events:auto}
-.l3bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;
-  background:var(--card);border-bottom:1px solid var(--line);padding:12px 14px}
-.l3bar .bk{font-size:24px;line-height:1;color:var(--tx2);cursor:pointer;width:28px;text-align:center}
-.l3bar .lt{font-weight:800;font-size:15px}
-.l3body{max-width:760px;margin:0 auto;padding:14px 14px 60px}
-.blk{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  box-shadow:var(--sh);padding:14px;margin-bottom:12px}
-.blk h3{margin:0 0 10px;font-size:14px;font-weight:800}
-.coupon{font-size:12.5px;padding:9px 11px;border-radius:9px;background:var(--bg);margin-bottom:6px}
-.coupon .cn{font-weight:700}
-.coupon .cd{color:var(--tx3);font-size:11.5px;margin-top:2px}
-.pur{font-size:12.5px;padding:8px 0;border-bottom:1px dashed var(--line);display:flex;gap:8px}
-.pur:last-child{border-bottom:0}
-.pur .pd{color:var(--tx3);font-size:11.5px;flex:none;width:82px;font-variant-numeric:tabular-nums}
-.pur .pp{flex:1;min-width:0}
-.pur .pa{font-weight:700;flex:none}
-.empty{text-align:center;color:var(--tx3);padding:34px 12px;font-size:13px}
-.mform label{display:block;font-size:11.5px;color:var(--tx3);margin:10px 0 5px;font-weight:700}
-.mform input,.mform select,.mform textarea{width:100%;border:1px solid var(--line);border-radius:10px;
-  padding:9px 11px;font-size:14px;background:#fff;outline:none;font-family:inherit}
-.mform input:focus,.mform textarea:focus{border-color:var(--brand)}
-.mform textarea{resize:vertical;min-height:56px}
-.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-main{width:100%;margin-top:14px;min-height:44px;border:0;border-radius:12px;
-  background:var(--brand);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
-.btn-main:active{background:#6d28d9}
-.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);z-index:400;
-  background:#1f2430;color:#fff;font-size:13px;padding:10px 18px;border-radius:22px;
-  opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.toast.show{opacity:1}
 </style>
 </head>
 <body>
@@ -251,7 +98,7 @@ body.l3-open #detail{opacity:1;pointer-events:auto}
     </div>
   </section>
 </div>
-<div class="wb-foot" id="wbFoot">与收入看板使用同一套账号密码 · 会员明细只存在本机，登录后由本机服务下发</div>
+<div class="wb-foot">与收入看板使用同一套账号密码 · 会员明细只存在本机，登录后由本机服务下发</div>
 
 <div class="wb-load" id="loadView">
   <section class="v111-login" aria-label="加载中">
@@ -269,29 +116,10 @@ body.l3-open #detail{opacity:1;pointer-events:auto}
   </section>
 </div>
 
-<!-- 工作台主体（storyos 同款：APP 壳在本页，数据登录后拉小 JSON 现渲染） -->
-<div id="app">
-  <div class="wrap" id="appWrap"></div>
-  <nav id="tabbar">
-    <button data-tab="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg>总览</button>
-    <button data-tab="emp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 19a5.4 5.4 0 0 1 10.8 0"/><path d="M16 5.5a3 3 0 0 1 0 5.8"/><path d="M17 19a5.4 5.4 0 0 0-3.4-5"/></svg>员工</button>
-    <button data-tab="cust"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>客户</button>
-    <button data-tab="mq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.2-4.2"/></svg>会员查询</button>
-  </nav>
-</div>
-
-<!-- L3 明细整页 -->
-<div id="detail">
-  <div class="l3bar"><span class="bk" onclick="closeDetail()">‹</span><span class="lt" id="dTitle">客户明细</span></div>
-  <div class="l3body" id="dBody"></div>
-</div>
-<div class="toast" id="toast"></div>
-
 <script>
 /* ===== mms 登录逻辑：与 storyos 收入看板 doLogin 逐字同款（令牌签发/429/401/文案一致） =====
-   登录后取数同样照搬 storyos「一次拉小 JSON」：GET /api/wb/summary（~54KB gzip），
-   浏览器现渲染四 Tab；会员明细/历史消费点开才拉 /api/wb/member（按需 1~10KB）。
-   首屏不再硬塞 6.8MB 单体 HTML，因此零切片、登录快。 */
+   差异仅在「登录后取数」：storyos 一次 GET /api/data 收 JSON；mms 因 6.8MB 体量走
+   /api/wb/manifest + 8 片 /api/wb/chunk 并发拉齐后 document.write 拼整页（Serveo 单响应~256KB 断流所迫）。 */
 (function(){
   var API='https://lijiacun-board.serveousercontent.com';
   var TOKEN_KEY='storyos_token_v1';   /* 与 storyos 同源(GitHub Pages 同 origin)共享，登录一次两站通用 */
@@ -307,14 +135,16 @@ body.l3-open #detail{opacity:1;pointer-events:auto}
       wbNum=document.getElementById('wbNum'),
       wbErr=document.getElementById('wbErr'),
       wbLogout=document.getElementById('wbLogout');
-  window.__API__=API; window.__TOKEN_KEY__=TOKEN_KEY; window.__SYNC_KEY__=SYNC_KEY;
 
   if(new URLSearchParams(location.search).get('expired')==='1')
     err.textContent='登录已过期，请重新登录';
   document.getElementById('wbForgot').onclick=function(){
     err.textContent='密码与收入看板共用；忘记请联系店长在本机重置，或登录后由店长在「改密」里处理。';
   };
-  wbLogout.onclick=function(){ doLogout(); };
+  wbLogout.onclick=function(){
+    try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SYNC_KEY); }catch(e){}
+    location.reload();
+  };
 
   /* 与 storyos doLogin 完全一致：POST /api/login → 收 token → 存本地 → 进数据加载 */
   function doLogin(ev){
@@ -348,356 +178,59 @@ body.l3-open #detail{opacity:1;pointer-events:auto}
     b.onclick=function(){ location.reload(); };
     wbErr.appendChild(document.createElement('br')); wbErr.appendChild(b);
   }
-  window.__startLoad__=startLoad;
 
-  /* 照搬 storyos：一次 GET 拿结构化 JSON（gzip ~54KB），无需切片 */
+  /* mms 取数：manifest + 8 片并发拉齐（storyos 为单 GET /api/data，此处因体量改为切片） */
   function loadData(token){
-    wbFill.style.width='35%'; wbNum.textContent='正在验票并加载会员摘要…';
-    return fetch(API+'/api/wb/summary?token='+encodeURIComponent(token),{cache:'no-store'})
+    return fetch(API+'/api/wb/manifest?token='+encodeURIComponent(token),{cache:'no-store'})
       .then(function(r){
         if(r.status===401){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} throw new Error('登录已过期，请重新登录'); }
-        if(!r.ok) throw new Error('摘要读取失败（'+r.status+'）');
+        if(!r.ok) throw new Error('清单读取失败（'+r.status+'）');
         return r.json();
       })
-      .then(function(d){
-        if(!d.ok) throw new Error(d.error||'数据未就绪');
-        wbFill.style.width='100%'; wbNum.textContent='加载完成';
-        window.__S__=d; window.__TOKEN__=token;
-        document.getElementById('loadView').classList.remove('show');
-        document.getElementById('wbFoot').style.display='none';
-        document.getElementById('app').classList.add('on');
-        document.documentElement.classList.add('authed');
-        bootApp(d);
+      .then(function(m){
+        if(!m.chunks||m.chunks<1) throw new Error('清单无有效分片');
+        var parts=new Array(m.chunks), done=0, queue=[];
+        for(var i=0;i<m.chunks;i++) queue.push(i);
+        function paint(){ wbFill.style.width=(done/m.chunks*100).toFixed(1)+'%'; wbNum.textContent='已加载 '+done+' / '+m.chunks+' 片'; }
+        function fetchChunk(i){
+          var tries=3,k=0;
+          function attempt(){ return fetch(API+'/api/wb/chunk?i='+i+'&token='+encodeURIComponent(token),{cache:'no-store'})
+            .then(function(q){
+              if(q.status===401){ try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(SYNC_KEY);}catch(e){} throw new Error('登录已失效，请重新登录'); }
+              if(!q.ok) throw new Error('第 '+i+' 片状态 '+q.status);
+              return q.text();
+            }); }
+          function loop(){ return attempt().catch(function(e){ if(k++<tries-1) return new Promise(function(r){setTimeout(r,600*(k+1));}).then(loop); throw e; }); }
+          return loop();
+        }
+        async function worker(){ while(queue.length){ var i=queue.shift(); parts[i]=await fetchChunk(i); done++; paint(); } }
+        return Promise.all([worker(),worker()]).then(function(){
+          var html=parts.join('');
+          if(html.indexOf('</html>')<0) throw new Error('页面数据不完整');
+          if(html.indexOf('__DATA_W__')>=0) throw new Error('页面数据未注入');
+          history.replaceState(null,'','?api='+encodeURIComponent(API));
+          var boot='<scr'+'ipt>window.__WB_ONLINE__=true;window.__WB_TOKEN__='
+            +JSON.stringify(token)+';'
+            +'(function(){var b=document.createElement("button");b.textContent="退出登录";'
+            +'b.style.cssText="position:fixed;top:8px;right:8px;z-index:99999;padding:8px 14px;border:0;'
+            +'border-radius:18px;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;cursor:pointer";'
+            +'b.onclick=function(){try{localStorage.removeItem("'+TOKEN_KEY+'");localStorage.removeItem("'+SYNC_KEY+'");}catch(e){}'
+            +'location.href=location.origin+location.pathname;};'
+            +'document.addEventListener("DOMContentLoaded",function(){'
+            +'var m=document.getElementById("main")||document.body; if(m) m.appendChild(b);});})();<\/scr'+'ipt>';
+          html=html.replace('<head>','<head>'+boot,1);
+          wbSub.textContent='加载完成，正在打开…';
+          document.open(); document.write(html); document.close();
+        });
       });
   }
 
   form.addEventListener('submit', doLogin);
+
+  // 启动：有已存 token 直接进，否则显示登录（与 storyos 首帧判定一致）
   var saved=null; try{ saved=localStorage.getItem(TOKEN_KEY); }catch(e){}
   if(saved){ startLoad(saved); }
 })();
-</script>
-
-<script>
-/* ============ 工作台渲染层（storyos 同款：数据 → 浏览器现渲染） ============ */
-var S=window.__S__||{}, API=window.__API__;
-/* 登录是异步的：token 必须运行时读取，不能在脚本加载时固化成空串 */
-function tok(){ return window.__TOKEN__ || (function(){try{return localStorage.getItem(window.__TOKEN_KEY__)||'';}catch(e){return '';}})(); }
-var TAB='home', CUST_FILTER='all', MQ_QUERY='', CUR_ID='', CUR_KIND='';
-
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
-  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
-function nnum(v){ return (v==null||isNaN(Number(v)))?0:Number(v); }
-function fmt(v){ var n=nnum(v); return String(n); }
-function $(id){ return document.getElementById(id); }
-function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2200); }
-
-/* 回访口径：待跟进 = 有未用券(nu>0) 且 marks 未标 done/visited；已回访 = marks 中 done/visited 且未删 */
-function followStats(){
-  var marks=S.marks||{}, done=0, pending=0, visited=0;
-  (S.members||[]).forEach(function(m){
-    var mk=marks[m.id];
-    var isDone=mk && !mk.deleted && (mk.done||mk.visited);
-    if(isDone){ done++; if(mk.visited) visited++; }
-    else if(nnum(m.nu)>0){ pending++; }
-  });
-  for(var k in marks){ var mk=marks[k]; if(mk&&!mk.deleted&&(mk.done||mk.visited)&&!isMemberId(k)) done++; }
-  var pool=done+pending;
-  return {done:done,pending:pending,visited:visited,pool:pool,pct:pool?Math.round(done/pool*100):0};
-}
-function isMemberId(id){ return (S.members||[]).some(function(m){return m.id===id;}); }
-function mkOf(id){ var m=(S.marks||{})[id]; return (m&&!m.deleted)?m:null; }
-
-/* 数据时点：只认各块真实采集时刻，绝不拿构建/打开时间冒充；超 3 天标红 */
-function staleCls(ts){
-  if(!ts) return '';
-  var s=String(ts).replace(/-/g,'/').replace(/\.\d+$/,'');
-  var t=new Date(s).getTime();
-  if(isNaN(t)) return '';
-  return (Date.now()-t)>72*3600*1000?'stale':'';
-}
-function asOfItems(){
-  var a=S.asOf||{};
-  return [
-    ['券 / 会员', a.coupons||S.generatedAt],
-    ['现金券', a.cash||S.generatedAt],
-    ['消费记录', a.consumption],
-    ['会员画像', a.profiles],
-    ['钢化膜', a.film],
-    ['页面构建', a.built],
-    ['总览聚合', S.unifiedAt],
-    ['回访标记', S.marksUpdatedAt]
-  ];
-}
-function healthBad(){
-  var blocks=(S.health&&S.health.blocks)||{}, bad=[];
-  for(var k in blocks){ var b=blocks[k]; if(b&&b.status&&b.status!=='ok') bad.push((b.label||k)+'：'+(b.note||b.status)); }
-  return bad;
-}
-function bannerHtml(){
-  var bad=healthBad();
-  if(bad.length){
-    return '<div class="banner warn"><div class="b-t">本轮有数据未全部更新成功</div>'
-      +esc(bad.join('；'))+'。当前显示的是 '+esc(S.generatedAt||'上一版')+' 的数据，各块真实时点见下方，未拿旧数据冒充今日更新。</div>';
-  }
-  return '<div class="banner ok">数据每早 08:00 由本机刷新 · 会员明细仅验票后从本机下发 · 各块真实采集时点见下</div>';
-}
-
-/* ---------- 总览 ---------- */
-function renderHome(){
-  var t=S.total||{}, f=followStats(), emps=S.emps||[];
-  var kpis=[
-    ['在册会员',t.members,'人'],['在账权益券',t.unpaid,'张'],['可消费次数',t.leftSum,'次'],['待跟进客户',f.pending,'人'],
-    ['已回访',f.done,'人'],['历史客户',S.historyCount,'位'],['在册员工',emps.length,'人'],['进行中活动',(S.promo||{}).count,'个']
-  ];
-  var kpiH='<div class="kpi-strip">'+kpis.map(function(x){
-    return '<div class="kpi"><div class="t">'+esc(x[0])+'</div><div class="v num">'+fmt(x[1])+'<small>'+x[2]+'</small></div></div>';
-  }).join('')+'</div>';
-
-  var asofH='<div class="card"><div class="sec-h"><h2>数据与口径</h2><span class="d">每块真实采集时刻 · 超 3 天标红</span></div>'
-    +'<div class="asof-g">'+asOfItems().map(function(x){
-      return '<div class="asof-i"><span class="an">'+esc(x[0])+'</span>'
-        +'<span class="av '+staleCls(x[1])+'">'+esc(x[1]||'—')+'</span></div>';
-    }).join('')+'</div></div>';
-
-  var empsSorted=emps.slice().sort(function(a,b){return nnum(b.unpaid)-nnum(a.unpaid);});
-  var empH='<div class="card"><div class="sec-h"><h2>员工客户资产 TOP</h2><span class="d">按在账券排序</span></div>'
-    +'<table class="tbl"><thead><tr><th>员工</th><th>名下会员</th><th>待跟进</th><th>在账券</th><th>剩余次数</th></tr></thead><tbody>'
-    +empsSorted.slice(0,8).map(function(e){
-      return '<tr><td class="emp">'+esc(e.emp)+'</td><td class="num">'+fmt(e.members)+'</td>'
-        +'<td class="num">'+fmt(e.membersWithUnpaid)+'</td><td class="num">'+fmt(e.unpaid)+'</td>'
-        +'<td class="num">'+fmt(e.leftSum)+'</td></tr>';
-    }).join('')+'</tbody></table></div>';
-
-  var promoH='<div class="card"><div class="sec-h"><h2>门店活动行情</h2><span class="d">'+esc((S.promo||{}).asOf||'')+' · 共 '+fmt((S.promo||{}).count)+' 个进行中</span></div>'
-    +(((S.promo||{}).items||[]).length?((S.promo||{}).items).map(function(p){
-      return '<div class="coupon"><div class="cn">'+esc(p.name)+'</div><div class="cd">截止 '+esc(p.end||'—')+'</div></div>';
-    }).join(''):'<div class="hint">当前没有进行中的活动行情</div>')
-    +'<div class="hint" style="margin-top:8px">活动/降价为非实时快照，话术须结合活动券，不承诺未核实优惠</div></div>';
-
-  return '<div class="topbar"><div><div class="tt">总览</div><div class="meta">'+esc(S.store||'')+' · 数据时点 '+esc(S.generatedAt||'—')+'</div></div><div class="spacer"></div><button class="btn-out" onclick="doLogout()">退出登录</button></div>'
-    +bannerHtml()+kpiH+'<div style="height:12px"></div>'+empH+asofH+promoH;
-}
-
-/* ---------- 员工（店长监督） ---------- */
-function renderEmp(){
-  var emps=(S.emps||[]).slice().sort(function(a,b){return nnum(b.membersWithUnpaid)-nnum(a.membersWithUnpaid);});
-  var f=followStats();
-  var rows=emps.map(function(e){
-    var rate=(nnum(e.membersWithUnpaid)+0)?0:0; // 跟进率按标记实时算，见下
-    return e;
-  });
-  var tbl='<table class="tbl"><thead><tr><th>员工</th><th>名下会员</th><th>待跟进</th><th>在账券</th><th>剩余次数</th><th>跟进率</th></tr></thead><tbody>'
-    +emps.map(function(e){
-      // 该员工名下已回访数（按 marks 与 member.emp 关联）
-      var mine=(S.members||[]).filter(function(m){return m.emp===e.emp;});
-      var dn=0; mine.forEach(function(m){var mk=mkOf(m.id); if(mk&&(mk.done||mk.visited)) dn++;});
-      var pend=mine.filter(function(m){return nnum(m.nu)>0 && !(mkOf(m.id)&&(mkOf(m.id).done||mkOf(m.id).visited));}).length;
-      var pool=dn+pend, pct=pool?Math.round(dn/pool*100):0;
-      return '<tr><td class="emp">'+esc(e.emp)+'</td><td class="num">'+fmt(e.members)+'</td>'
-        +'<td class="num">'+fmt(pend)+'</td><td class="num">'+fmt(e.unpaid)+'</td>'
-        +'<td class="num">'+fmt(e.leftSum)+'</td>'
-        +'<td><div style="display:flex;align-items:center;gap:6px"><div class="bar" style="flex:1"><i style="width:'+pct+'%"></i></div><span class="num" style="font-size:11.5px;color:'+(pct<50?'var(--red)':'var(--brand)')+'">'+pct+'%</span></div></td></tr>';
-    }).join('')+'</tbody></table>';
-  var head='<div class="topbar"><div><div class="tt">员工</div><div class="meta">店长监督 · 看员工回访情况，店长不代员工回访</div></div><div class="spacer"></div><button class="btn-out" onclick="doLogout()">退出登录</button></div>';
-  var note='<div class="card"><div class="sec-h"><h2>店长监督</h2><span class="d">整体跟进率 '+f.pct+'%</span></div>'
-    +'<div class="hint">待跟进：有未用券、且还没在客户页标记「已到店 / 已回访」的人；标记后即时从待跟进里扣除。<br>累计跟进 / 跟进率：已回访 ÷（已回访 + 待跟进），标记记录只同步结果字段，客户姓名电话一律不上传。<br>内容是员工回访情况 / 跟进率 / 逾期，店长是管理者，不代员工回访。</div></div>';
-  return head+bannerHtml()+note+'<div class="card"><div class="sec-h"><h2>员工客户资产与跟进</h2><span class="d">按待跟进人数排序</span></div>'+tbl+'</div>';
-}
-
-/* ---------- 客户 ---------- */
-function custList(){
-  var arr=(S.members||[]).slice();
-  if(CUST_FILTER==='pending') arr=arr.filter(function(m){return nnum(m.nu)>0 && !(mkOf(m.id)&&(mkOf(m.id).done||mkOf(m.id).visited));});
-  else if(CUST_FILTER==='visited') arr=arr.filter(function(m){var mk=mkOf(m.id);return mk&&(mk.done||mk.visited);});
-  else if(CUST_FILTER==='block') arr=arr.filter(function(m){var mk=mkOf(m.id);return mk&&mk.block;});
-  else if(CUST_FILTER==='unused') arr=arr.filter(function(m){return nnum(m.nu)>0;});
-  return arr;
-}
-function renderCust(){
-  var f=followStats();
-  var chips=[['all','全部'],['pending','待跟进'],['visited','已回访'],['unused','有未用券'],['block','勿扰']];
-  var chipH='<div class="chips">'+chips.map(function(c){
-    return '<button class="chip'+(CUST_FILTER===c[0]?' on':'')+'" onclick="setCustFilter(\''+c[0]+'\')">'+c[1]+'</button>';
-  }).join('')+'</div>';
-  var list=custList();
-  var rows=list.slice(0,200).map(function(m){
-    var mk=mkOf(m.id), tag='', tagc='n';
-    if(mk&&mk.block){tag='勿扰';tagc='r';}
-    else if(mk&&(mk.done||mk.visited)){tag='已回访';tagc='g';}
-    else if(nnum(m.nu)>0){tag='待跟进';tagc='b';}
-    return '<div class="row" onclick="openDetail(\''+esc(m.id)+'\')">'
-      +'<div class="av">'+esc((m.name||'?').replace(/\*/g,'').charAt(0)||'?')+'</div>'
-      +'<div class="info"><div class="nm">'+esc(m.name||'—')+'<span class="ph">'+esc(m.phone||'')+'</span></div>'
-      +'<div class="sub">'+esc(m.emp||'—')+' · '+esc(m.level||'—')+' · 未用券 '+fmt(m.nu)+' · 末次 '+esc(m.last||'—')+'</div></div>'
-      +'<span class="tag '+tagc+'">'+tag+'</span></div>';
-  }).join('');
-  var head='<div class="topbar"><div><div class="tt">客户</div><div class="meta">在册 '+fmt((S.total||{}).members)+' 人 · 待跟进 '+f.pending+' · 已回访 '+f.done+'</div></div><div class="spacer"></div><button class="btn-out" onclick="doLogout()">退出登录</button></div>';
-  return head+bannerHtml()+chipH+(rows||'<div class="empty">该筛选下暂无客户</div>')
-    +(list.length>200?'<div class="hint" style="text-align:center;padding:8px">仅显示前 200 位，用「会员查询」搜索全部</div>':'');
-}
-function setCustFilter(f){ CUST_FILTER=f; paint(); }
-
-/* ---------- 会员查询 ---------- */
-function mqResults(){
-  var q=MQ_QUERY.trim().toLowerCase();
-  if(!q) return [];
-  var out=[];
-  (S.members||[]).forEach(function(m){
-    if((m.name||'').replace(/\*/g,'').toLowerCase().indexOf(q)>=0 || (m.phone||'').toLowerCase().indexOf(q)>=0)
-      out.push({id:m.id,name:m.name,phone:m.phone,sub:m.emp+' · '+m.level+' · 末次 '+(m.last||'—'),type:'在册'});
-  });
-  (S.history||[]).forEach(function(h){
-    if((h.name||'').replace(/\*/g,'').toLowerCase().indexOf(q)>=0 || (h.phone||'').toLowerCase().indexOf(q)>=0)
-      out.push({id:h.id,name:h.name,phone:h.phone,sub:'历史客户 · 消费 '+fmt(h.n)+' 笔 · 末次 '+(h.last||'—'),type:'历史'});
-  });
-  return out;
-}
-function renderMQ(){
-  var res=mqResults();
-  var head='<div class="topbar"><div><div class="tt">会员查询</div><div class="meta">在册 '+fmt((S.members||[]).length)+' + 历史 '+fmt(S.historyCount)+' 位 · 搜姓名或手机尾号</div></div><div class="spacer"></div><button class="btn-out" onclick="doLogout()">退出登录</button></div>';
-  var box='<input class="search" id="mqInput" placeholder="输入姓名 / 手机尾号，命中在册与历史客户" value="'+esc(MQ_QUERY)+'" oninput="onMQInput(this.value)">';
-  var rows=res.slice(0,120).map(function(r){
-    return '<div class="row" onclick="openDetail(\''+esc(r.id)+'\')">'
-      +'<div class="av'+(r.type==='历史'?' gray':'')+'">'+esc((r.name||'?').replace(/\*/g,'').charAt(0)||'?')+'</div>'
-      +'<div class="info"><div class="nm">'+esc(r.name||'—')+'<span class="ph">'+esc(r.phone||'')+'</span></div>'
-      +'<div class="sub">'+esc(r.sub)+'</div></div>'
-      +'<span class="tag '+(r.type==='在册'?'b':'n')+'">'+r.type+'</span></div>';
-  }).join('');
-  var body=MQ_QUERY?(rows||'<div class="empty">无匹配结果（可搜姓名或手机尾号）</div>'):'<div class="empty">输入姓名或手机尾号开始查询<br><span class="hint">会员明细、消费记录、券在点开后按需从本机加载</span></div>';
-  return head+bannerHtml()+box+body;
-}
-function onMQInput(v){ MQ_QUERY=v; var el=$('mqInput'); paint(true); }
-
-/* ---------- L3 明细（按需 /api/wb/member） ---------- */
-function openDetail(id){
-  CUR_ID=id; $('dBody').innerHTML='<div class="empty">正在从本机加载该客户明细…</div>';
-  $('dTitle').textContent='客户明细';
-  document.body.classList.add('l3-open');
-  fetch(API+'/api/wb/member?id='+encodeURIComponent(id)+'&token='+encodeURIComponent(tok()),{cache:'no-store'})
-    .then(function(r){ if(r.status===401){toast('登录已失效');return null;} return r.json(); })
-    .then(function(d){
-      if(!d||!d.ok){ $('dBody').innerHTML='<div class="empty">未找到该客户的明细</div>'; return; }
-      CUR_KIND=d.kind; renderDetail(d.member,d.kind);
-    }).catch(function(){ $('dBody').innerHTML='<div class="empty">明细加载失败，请稍后重试</div>'; });
-}
-function closeDetail(){ document.body.classList.remove('l3-open'); }
-
-function couponList(arr,title){
-  if(!arr||!arr.length) return '';
-  return '<div class="blk"><h3>'+title+'（'+arr.length+'）</h3>'+arr.slice(0,40).map(function(c){
-    return '<div class="coupon"><div class="cn">'+esc(c.name||'券')+(c.face?' · '+esc(c.face):'')+'</div>'
-      +(c.sub?'<div class="cd">'+esc(c.sub)+'</div>':'')+'</div>';
-  }).join('')+(arr.length>40?'<div class="hint">仅显示前 40 张</div>':'')+'</div>';
-}
-function purchaseList(pur){
-  if(!pur||!pur.length) return '<div class="blk"><h3>消费记录</h3><div class="hint">本机暂无该客户的消费记录</div></div>';
-  return '<div class="blk"><h3>消费记录（'+pur.length+'）</h3>'+pur.slice(0,60).map(function(p){
-    return '<div class="pur"><span class="pd">'+esc(p.date||'—')+'</span>'
-      +'<span class="pp">'+esc(p.product||'商品')+(p.class?' · '+esc(p['class']):'')+(p.emp?' · '+esc(p.emp):'')+'</span>'
-      +'<span class="pa">'+(p.amt!=null?fmt(p.amt):'')+'</span></div>';
-  }).join('')+(pur.length>60?'<div class="hint">仅显示前 60 条</div>':'')+'</div>';
-}
-function markForm(id,m){
-  var has=CUR_KIND==='member';
-  if(!has) return '<div class="blk"><h3>回访标记</h3><div class="hint">历史客户不在在册会员范围，不参与回访跟进统计；如需跟进请在用友建档。</div></div>';
-  var mk=mkOf(id)||{};
-  return '<div class="blk"><h3>回访标记 · 跨设备同步</h3>'
-    +'<div class="hint">只同步「结果 / 备注 / 下次跟进日 / 触达日 / 勿扰」，客户姓名电话一律不上传。标记后所有设备一致。</div>'
-    +'<div class="mform" style="margin-top:10px">'
-    +'<label>跟进结果</label><select id="mfResult">'
-    +['','已到店','已回访','再约','未接通','暂不考虑'].map(function(x){
-      return '<option value="'+esc(x)+'"'+(mk.result===x?' selected':'')+'>'+(x||'（未填）')+'</option>';}).join('')+'</select>'
-    +'<div class="mrow"><div><label>下次跟进日</label><input id="mfNext" type="date" value="'+esc(mk.nextDate||'')+'"></div>'
-    +'<div><label>触达日</label><input id="mfTime" type="date" value="'+esc(mk.time||'')+'"></div></div>'
-    +'<label>备注</label><textarea id="mfNote" placeholder="选填">'+esc(mk.note||'')+'</textarea>'
-    +'<label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="mfBlock" style="width:auto"'+(mk.block?' checked':'')+'> 设为勿扰（不再进入待跟进）</label>'
-    +'<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mfDone" style="width:auto"'+(mk.done||mk.visited?' checked':'')+'> 标记「已到店 / 已回访」</label>'
-    +'</div><button class="btn-main" onclick="saveMark()">保存标记</button></div>';
-}
-function renderDetail(m,kind){
-  var name=m.name||'—', phone=m.phone||'';
-  $('dTitle').textContent=name;
-  var head='<div class="blk"><div style="font-size:17px;font-weight:800">'+esc(name)+'</div>'
-    +'<div class="hint" style="margin-top:4px">'+esc(phone)
-    +(kind==='member'?(' · '+esc(m.level||'—')+' · 归属 '+esc(m.emp||'—')):' · 历史客户')
-    +'</div></div>';
-  var body;
-  if(kind==='member'){
-    var c=m.consumption||{}, prof=m.profile;
-    var stat='<div class="kpi-strip" style="grid-template-columns:repeat(3,1fr)">'
-      +'<div class="kpi"><div class="t">未用券</div><div class="v num">'+fmt(m.n_unused)+'</div></div>'
-      +'<div class="kpi"><div class="t">已用券</div><div class="v num">'+fmt(m.n_used)+'</div></div>'
-      +'<div class="kpi"><div class="t">已过期</div><div class="v num">'+fmt(m.n_expired)+'</div></div></div>';
-    var profH=prof?'<div class="blk"><h3>会员画像</h3><div class="hint">'+esc(typeof prof==='object'?JSON.stringify(prof):prof)+'</div></div>':'';
-    body=stat+'<div style="height:12px"></div>'
-      +couponList(m.unused,'未使用券')+couponList(m.used,'已使用券')+couponList(m.expired,'已过期券')
-      +purchaseList(c.purchases||[])+profH;
-  }else{
-    body=purchaseList(m.purchases||[]);
-  }
-  $('dBody').innerHTML=head+body+markForm(CUR_ID,m);
-}
-
-/* 回访标记写入：POST /api/marks（last-write-wins，跨设备同步） */
-function saveMark(){
-  var changes={};
-  var obj={
-    _ts:Date.now(), deleted:false,
-    result:$('mfResult').value, note:$('mfNote').value,
-    nextDate:$('mfNext').value, time:$('mfTime').value,
-    visited:$('mfDone').checked, done:$('mfDone').checked, block:$('mfBlock').checked
-  };
-  changes[CUR_ID]=obj;
-  fetch(API+'/api/marks?token='+encodeURIComponent(tok()),{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({token:tok(),changes:changes})})
-    .then(function(r){ return r.json().then(function(j){return {ok:r.ok,j:j};}); })
-    .then(function(res){
-      if(!res.ok||!res.j.ok){ toast('保存失败：'+(res.j.error||'未写入')); return; }
-      S.marks=res.j.marks; S.marksUpdatedAt=res.j.updatedAt;
-      toast('已保存并同步');
-      paint();
-      // 保持明细打开态，重渲染标记区勾选项
-      var keep=CUR_ID;
-      fetch(API+'/api/wb/member?id='+encodeURIComponent(keep)+'&token='+encodeURIComponent(tok()))
-        .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok) renderDetail(d.member,d.kind); });
-    }).catch(function(){ toast('网络异常，标记未保存'); });
-}
-
-/* ---------- 导航 / 渲染调度 ---------- */
-function paint(keepFocus){
-  var w=$('appWrap'); if(!w) return;
-  if(TAB==='home') w.innerHTML=renderHome();
-  else if(TAB==='emp') w.innerHTML=renderEmp();
-  else if(TAB==='cust') w.innerHTML=renderCust();
-  else w.innerHTML=renderMQ();
-  var btns=document.querySelectorAll('#tabbar button');
-  for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on',btns[i].getAttribute('data-tab')===TAB);
-  if(keepFocus&&TAB==='mq'){
-    var el=$('mqInput'); if(el){ el.focus(); try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){} }
-  }
-}
-function switchTab(t){
-  TAB=t; document.body.classList.remove('l3-open');
-  window.scrollTo(0,0); paint();
-}
-function bootApp(d){
-  S=d; window.__S__=d;
-  var bar=document.querySelectorAll('#tabbar button');
-  for(var i=0;i<bar.length;i++) bar[i].addEventListener('click',function(){ switchTab(this.getAttribute('data-tab')); });
-  paint();
-  // 60s 轮询对账回访标记，恢复/其它设备改动自动补齐（失败不拿本机冒充最新）
-  setInterval(function(){
-    fetch(API+'/api/marks?token='+encodeURIComponent(tok()),{cache:'no-store'})
-      .then(function(r){return r.ok?r.json():null;}).then(function(j){
-        if(j&&j.ok){ S.marks=j.marks; S.marksUpdatedAt=j.updatedAt; paint(); }
-      }).catch(function(){});
-  },60000);
-}
-function doLogout(){
-  try{localStorage.removeItem(window.__TOKEN_KEY__);localStorage.removeItem(window.__SYNC_KEY__);}catch(e){}
-  location.href=location.origin+location.pathname;
-}
 </script>
 </body>
 </html>
